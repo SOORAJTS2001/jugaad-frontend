@@ -6,6 +6,7 @@ import {Badge} from '@/components/ui/badge';
 import {ArrowLeft, Clock, ExternalLink, TrendingDown, TrendingUp} from 'lucide-react';
 import AlertForm from './AlertForm';
 import {useAuth} from "@/hooks/useAuth.tsx";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 function formatTimestamp(isoString) {
     try {
@@ -79,7 +80,7 @@ const ItemDetails = () => {
         }
         const fetchItemDetails = async () => {
             setLoading(true);
-            fetch('https://o207ltrv.leopard-boa.ts.net/get-item', {
+            fetch('https://jugaad-prod.up.railway.app/get-item', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -213,6 +214,8 @@ const ItemDetails = () => {
                                 <CardDescription>Track price changes over time</CardDescription>
                             </CardHeader>
                             <CardContent>
+                                                                                <ScrollArea className="h-48 pr-4">
+
                                 <div className="space-y-3">
                                     {item.priceHistory.map((entry, index) => (
                                         <div key={index}
@@ -235,6 +238,8 @@ const ItemDetails = () => {
                                         </div>
                                     ))}
                                 </div>
+                                                                                 </ScrollArea>
+
                             </CardContent>
                         </Card>
 

@@ -31,7 +31,7 @@ export function ItemActionsDropdown({onView, onEdit, onDelete}: {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted/90">
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted/90 h-8 w-8">
                     <MoreHorizontal className="h-4 w-4"/>
                 </Button>
             </DropdownMenuTrigger>
@@ -52,10 +52,26 @@ export function ItemActionsDropdown({onView, onEdit, onDelete}: {
 
 const Dashboard = ({pincode}) => {
     const {user} = useAuth();
+    console.log(pincode)
     const [recentAlerts, setRecentAlerts] = useState([]);
+
+    // Load from localStorage on component mount
+    useEffect(() => {
+        const storedAlerts = localStorage.getItem(`recentAlerts_${user?.uid}`);
+        if (storedAlerts) {
+            setRecentAlerts(JSON.parse(storedAlerts));
+        }
+    }, [user?.uid]);
+
+    // Save to localStorage whenever recentAlerts changes
+    useEffect(() => {
+        if (user?.uid && recentAlerts.length > 0) {
+            localStorage.setItem(`recentAlerts_${user.uid}`, JSON.stringify(recentAlerts));
+        }
+    }, [recentAlerts, user?.uid]);
+
     useEffect(() => {
         if (!user) return; // Wait for user to be authenticated
-
 
         const data = {
             uid: user.uid,
@@ -64,7 +80,7 @@ const Dashboard = ({pincode}) => {
             pincode: pincode
         }
 
-        fetch('https://o207ltrv.leopard-boa.ts.net/get-items', {
+        fetch('https://jugaad-prod.up.railway.app/get-items', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -87,12 +103,12 @@ const Dashboard = ({pincode}) => {
                     max_offer: item.max_offer
                 }));
 
-                setRecentAlerts(alerts); // ✅ Save to state
+                setRecentAlerts(alerts); // ✅ Save to state and localStorage via useEffect
             })
             .catch((error) => {
                 console.error("Error fetching items:", error);
             });
-    }, [user]); // Run once on mount
+    }, [user, pincode]); // Add pincode as dependency
 
     const handleSignOut = async () => {
         try {
@@ -102,116 +118,51 @@ const Dashboard = ({pincode}) => {
         }
     };
 
-
-    // const recentAlerts = [
-    //   {
-    //     id: 1,
-    //     productName: "Samsung Galaxy Buds Pro",
-    //     site: "JioMart",
-    //     targetPrice: 15000,
-    //     currentPrice: 14850,
-    //     status: "active",
-    //     change: "+2.3%",
-    //     url: "https://www.jiomart.com/product/samsung-galaxy-buds-pro"
-    //   },
-    //   {
-    //     id: 2,
-    //     productName: "iPhone 15 Pro Max",
-    //     site: "Amazon",
-    //     targetPrice: 120000,
-    //     currentPrice: 125000,
-    //     status: "triggered",
-    //     change: "+5.1%",
-    //     url: "https://www.amazon.in/product/iphone-15-pro-max"
-    //   },
-    //   {
-    //     id: 3,
-    //     productName: "OnePlus 12 5G",
-    //     site: "Flipkart",
-    //     targetPrice: 45000,
-    //     currentPrice: 43500,
-    //     status: "active",
-    //     change: "-1.2%",
-    //     url: "https://www.flipkart.com/product/oneplus-12-5g"
-    //   }
-    // ];
-
-    // const quickStats = [
-    //     {
-    //         title: "Active Alerts",
-    //         value: "12",
-    //         change: "+3 from last week",
-    //         icon: Bell,
-    //         color: "text-blue-600"
-    //     },
-    //     {
-    //         title: "Triggered Today",
-    //         value: "3",
-    //         change: "2 profit, 1 loss",
-    //         icon: Target,
-    //         color: "text-green-600"
-    //     },
-    //     {
-    //         title: "Watchlist Items",
-    //         value: "24",
-    //         change: "+5 this week",
-    //         icon: Activity,
-    //         color: "text-purple-600"
-    //     },
-    //     {
-    //         title: "Success Rate",
-    //         value: "87%",
-    //         change: "+2% this month",
-    //         icon: CheckCircle2,
-    //         color: "text-emerald-600"
-    //     }
-    // ];
-
     return (
         <div className="min-h-screen bg-background">
             {/* Navigation */}
-            <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16 items-center">
-                        <div className="flex items-center space-x-4">
-                            <Button variant="ghost" size="icon" className="md:hidden">
-                                <Menu className="h-5 w-5"/>
+            <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+                    <div className="flex justify-between h-14 sm:h-16 items-center">
+                        <div className="flex items-center space-x-2 sm:space-x-4">
+                            <Button variant="ghost" size="icon" className="md:hidden h-8 w-8">
+                                <Menu className="h-4 w-4"/>
                             </Button>
-                            <div className="flex items-center space-x-2">
-                                <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                                    <TrendingUp className="h-5 w-5 text-primary-foreground"/>
+                            <div className="flex items-center space-x-1 sm:space-x-2">
+                                <div className="h-6 w-6 sm:h-8 sm:w-8 bg-primary rounded-lg flex items-center justify-center">
+                                    <TrendingUp className="h-3 w-3 sm:h-5 sm:w-5 text-primary-foreground"/>
                                 </div>
-                                <span className="text-xl font-bold">Jugaad</span>
+                                <span className="text-lg sm:text-xl font-bold">Jugaad</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center space-x-4">
-                            <Button variant="ghost" size="icon">
-                                <Bell className="h-5 w-5"/>
+                        <div className="flex items-center space-x-1 sm:space-x-4">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+                                <Bell className="h-4 w-4 sm:h-5 sm:w-5"/>
                             </Button>
-                            <Button variant="ghost" size="icon">
-                                <Settings className="h-5 w-5"/>
+                            <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8 sm:h-10 sm:w-10">
+                                <Settings className="h-4 w-4 sm:h-5 sm:w-5"/>
                             </Button>
-                            <div className="flex items-center space-x-2">
-                                <Avatar className="h-8 w-8">
+                            <div className="flex items-center space-x-1 sm:space-x-2">
+                                <Avatar className="h-6 w-6 sm:h-8 sm:w-8">
                                     <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || ''}/>
-                                    <AvatarFallback>
+                                    <AvatarFallback className="text-xs">
                                         {user?.displayName?.charAt(0) || 'U'}
                                     </AvatarFallback>
                                 </Avatar>
-                                <div className="hidden sm:block">
-                                    <p className="text-sm font-medium">{user?.displayName}</p>
-                                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                                <div className="hidden md:block">
+                                    <p className="text-sm font-medium truncate max-w-[120px]">{user?.displayName}</p>
+                                    <p className="text-xs text-muted-foreground truncate max-w-[120px]">{user?.email}</p>
                                 </div>
                             </div>
                             <Button
                                 onClick={handleSignOut}
                                 variant="ghost"
                                 size="sm"
-                                className="gap-2"
+                                className="gap-1 sm:gap-2 h-8 px-2 sm:px-3"
                             >
-                                <LogOut className="h-4 w-4"/>
-                                <span className="hidden sm:inline">Sign Out</span>
+                                <LogOut className="h-3 w-3 sm:h-4 sm:w-4"/>
+                                <span className="hidden sm:inline text-xs sm:text-sm">Sign Out</span>
                             </Button>
                         </div>
                     </div>
@@ -219,128 +170,123 @@ const Dashboard = ({pincode}) => {
             </nav>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
                 {/* Welcome Section */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold mb-2">
+                <div className="mb-6 sm:mb-8">
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">
                         Welcome back, {user?.displayName?.split(' ')[0]}!
                     </h1>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-sm sm:text-base">
                         Monitor your favorite products and get notified when prices drop.
                     </p>
                 </div>
 
-                {/*/!* Quick Stats *!/*/}
-                {/*<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">*/}
-                {/*    {quickStats.map((stat, index) => (*/}
-                {/*        <Card key={index}>*/}
-                {/*            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">*/}
-                {/*                <CardTitle className="text-sm font-medium text-muted-foreground">*/}
-                {/*                    {stat.title}*/}
-                {/*                </CardTitle>*/}
-                {/*                <stat.icon className={`h-4 w-4 ${stat.color}`}/>*/}
-                {/*            </CardHeader>*/}
-                {/*            <CardContent>*/}
-                {/*                <div className="text-2xl font-bold">{stat.value}</div>*/}
-                {/*                <p className="text-xs text-muted-foreground mt-1">*/}
-                {/*                    {stat.change}*/}
-                {/*                </p>*/}
-                {/*            </CardContent>*/}
-                {/*        </Card>*/}
-                {/*    ))}*/}
-                {/*</div>*/}
-
                 {/* Main Content Area */}
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
                     {/* Alerts List */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 order-2 lg:order-1">
                         <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
+                            <CardHeader className="pb-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div>
-                                        <CardTitle>Price Alerts</CardTitle>
-                                        <CardDescription>
+                                        <CardTitle className="text-lg sm:text-xl">Price Alerts</CardTitle>
+                                        <CardDescription className="text-sm">
                                             Manage your active price monitoring alerts
                                         </CardDescription>
                                     </div>
-                                    <AlertForm/>
+                                    <div className="sm:hidden">
+                                        <AlertForm/>
+                                    </div>
                                 </div>
                             </CardHeader>
                             <CardContent>
                                 <Tabs defaultValue="active" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-3">
-                                        <TabsTrigger value="active">Active</TabsTrigger>
-                                        <TabsTrigger value="triggered">Triggered</TabsTrigger>
-                                        <TabsTrigger value="all">All</TabsTrigger>
+                                    <TabsList className="grid w-full grid-cols-3 h-9">
+                                        <TabsTrigger value="active" className="text-xs sm:text-sm">Active</TabsTrigger>
+                                        <TabsTrigger value="triggered" className="text-xs sm:text-sm">Triggered</TabsTrigger>
+                                        <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
                                     </TabsList>
 
-                                    <TabsContent value="active" className="space-y-4 mt-4">
+                                    <TabsContent value="active" className="space-y-3 sm:space-y-4 mt-4">
                                         {recentAlerts.map((alert) => (
                                             <div key={alert.id}
-                                                 className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                                <div className="flex items-center space-x-4">
-                                                    <div
-                                                        className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                                        <TrendingUp className="h-5 w-5 text-primary"/>
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Link
-                                                                to={`/item/${alert.item_id}`}
-                                                                className="font-medium hover:text-primary transition-colors block truncate max-w-[200px]" // tailwind classes
-                                                                title={alert.name} // show full name on hover
-                                                            >
-                                                                {alert.name}
-                                                            </Link>
-                                                            <Badge
-                                                                variant={alert.is_available === 'triggered' ? 'default' : 'secondary'}
-                                                                className="text-xs"
-                                                            >
-                                                                {alert.is_available === 'triggered' ?
-                                                                    <CheckCircle2 className="h-3 w-3 mr-1"/> :
-                                                                    <AlertCircle className="h-3 w-3 mr-1"/>}
-                                                                {alert.is_available}
-                                                            </Badge>
+                                                 className="flex flex-col gap-3 p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                                {/* Top Row - Product Info */}
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex items-start space-x-3 flex-1 min-w-0">
+                                                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                                            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary"/>
                                                         </div>
-                                                        <p className="text-sm text-muted-foreground truncate max-w-[200px]">{alert.category}</p>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <Link
+                                                                    to={`/item/${alert.item_id}`}
+                                                                    className="font-medium hover:text-primary transition-colors text-sm sm:text-base line-clamp-2 flex-1 block truncate max-w-[200px]"
+                                                                    title={alert.name}
+                                                                >
+                                                                    {alert.name}
+                                                                </Link>
+                                                                <Badge
+                                                                    variant={alert.is_available === 'triggered' ? 'default' : 'secondary'}
+                                                                    className="text-xs flex-shrink-0"
+                                                                >
+                                                                    {alert.is_available === 'triggered' ?
+                                                                        <CheckCircle2 className="h-3 w-3 mr-1"/> :
+                                                                        <AlertCircle className="h-3 w-3 mr-1"/>}
+                                                                    {alert.is_available}
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="text-xs sm:text-sm text-muted-foreground truncate">{alert.category}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-medium text-muted-foreground">Now:</p>
-                                                        <p className="font-medium">₹{alert.selling_price.toLocaleString()}</p>
+
+                                                {/* Bottom Row - Price Info and Actions */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    {/* Price Info */}
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-xs text-muted-foreground">Now:</p>
+                                                            <p className="font-medium text-sm sm:text-base">₹{alert.selling_price.toLocaleString()}</p>
+                                                        </div>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            MRP: ₹{alert.mrp_price.toLocaleString()}
+                                                        </p>
                                                     </div>
-                                                    <p className="text-sm text-muted-foreground">MRP:
-                                                        ₹{alert.mrp_price.toLocaleString()}</p>
-                                                </div>
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Badge
-                                                        variant="outline"
-                                                        className={alert.price_change.startsWith('+') ? 'text-red-600' : 'text-green-600'}
-                                                    >
-                                                        {Math.round((1 - (alert.selling_price / alert.mrp_price)) * 100)}%
-                                                    </Badge>
 
+                                                    {/* Discount and Actions */}
+                                                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="text-green-600 text-xs"
+                                                        >
+                                                            {Math.round((1 - (alert.selling_price / alert.mrp_price)) * 100)}%
+                                                        </Badge>
+                                                        <Badge variant="outline" className="text-gray-600 text-xs hidden sm:flex">
+                                                            ₹{alert.max_price} &nbsp;
+                                                            <Bell className="h-3 w-3 text-blue-600"/>
+                                                            &nbsp;
+                                                            {alert.max_offer}%
+                                                        </Badge>
+                                                        <Button variant="ghost" size="icon" asChild className="h-8 w-8">
+                                                            <a href={alert.source_url} target="_blank"
+                                                               rel="noopener noreferrer">
+                                                                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4"/>
+                                                            </a>
+                                                        </Button>
+                                                        <ItemActionsDropdown
+                                                            onView={() => console.log("View clicked")}
+                                                            onEdit={() => console.log("Edit clicked")}
+                                                            onDelete={() => console.log("Delete clicked")}
+                                                        />
+                                                    </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="outline" className="text-gray-600">
-                                                        ₹{alert.max_price} &nbsp;
-                                                        <Bell className="h-4 w-4 text-blue-600"/>
-                                                        &nbsp;
-                                                        {alert.max_offer}%
+                                                {/* Mobile Alert Info */}
+                                                <div className="sm:hidden">
+                                                    <Badge variant="outline" className="text-gray-600 text-xs">
+                                                        Target: ₹{alert.max_price} | {alert.max_offer}% off
                                                     </Badge>
-                                                    <Button variant="ghost" size="icon" asChild>
-                                                        <a href={alert.source_url} target="_blank"
-                                                           rel="noopener noreferrer">
-                                                            <ExternalLink className="h-4 w-4"/>
-                                                        </a>
-                                                    </Button>
-                                                    <ItemActionsDropdown
-                                                        onView={() => console.log("View clicked")}
-                                                        onEdit={() => console.log("Edit clicked")}
-                                                        onDelete={() => console.log("Delete clicked")}
-                                                    />
                                                 </div>
                                             </div>
                                         ))}
@@ -349,14 +295,14 @@ const Dashboard = ({pincode}) => {
                                     <TabsContent value="triggered" className="mt-4">
                                         <div className="text-center py-8">
                                             <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4"/>
-                                            <p className="text-muted-foreground">No triggered alerts today</p>
+                                            <p className="text-muted-foreground text-sm">No triggered alerts today</p>
                                         </div>
                                     </TabsContent>
 
                                     <TabsContent value="all" className="mt-4">
                                         <div className="text-center py-8">
                                             <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4"/>
-                                            <p className="text-muted-foreground">View all your alerts here</p>
+                                            <p className="text-muted-foreground text-sm">View all your alerts here</p>
                                         </div>
                                     </TabsContent>
                                 </Tabs>
@@ -365,15 +311,16 @@ const Dashboard = ({pincode}) => {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6 order-1 lg:order-2">
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Quick Actions</CardTitle>
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                <AlertForm/>
-
-                                <Button variant="outline" className="w-full justify-start gap-2">
+                                <div className="hidden sm:block">
+                                    <AlertForm/>
+                                </div>
+                                <Button variant="outline" className="w-full justify-start gap-2 h-9 text-sm">
                                     <Activity className="h-4 w-4"/>
                                     Price Prediction
                                 </Button>
@@ -381,13 +328,13 @@ const Dashboard = ({pincode}) => {
                         </Card>
 
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Supported Sites</CardTitle>
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-base sm:text-lg">Supported Sites</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm">JioMart</span>
-                                    <Badge variant="default" className="bg-green-500">Active</Badge>
+                                    <Badge variant="default" className="bg-green-500 text-xs">Active</Badge>
                                 </div>
                             </CardContent>
                         </Card>

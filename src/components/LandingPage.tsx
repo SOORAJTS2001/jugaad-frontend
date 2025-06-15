@@ -6,6 +6,7 @@ import {signInWithGoogle} from '@/services/authService';
 import {ArrowRight, BarChart3, Bell, Shield, Target, TrendingUp, Zap} from 'lucide-react';
 
 const LandingPage = ({pincode}) => {
+    console.log(pincode)
     const [isSigningIn, setIsSigningIn] = useState(false);
 
     const handleGoogleSignIn = async () => {
@@ -24,7 +25,7 @@ const LandingPage = ({pincode}) => {
             };
 
             // Make the backend POST call
-            const response = await fetch('https://o207ltrv.leopard-boa.ts.net/signup', { // Replace with your actual backend endpoint
+            const response = await fetch('https://jugaad-prod.up.railway.app/signup', { // Replace with your actual backend endpoint
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ const LandingPage = ({pincode}) => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
             {/* Navigation */}
-            <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 items-center">
                         <div className="flex items-center space-x-2">
