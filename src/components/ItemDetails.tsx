@@ -80,7 +80,7 @@ const ItemDetails = () => {
         }
         const fetchItemDetails = async () => {
             setLoading(true);
-            fetch('https:/jugaad-backend-production.up.railway.app/get-item', {
+            fetch('https://jugaad-backend-production.up.railway.app/get-item', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -25,7 +25,7 @@ const LandingPage = ({pincode}) => {
             };
 
             // Make the backend POST call
-            const response = await fetch('https:/jugaad-backend-production.up.railway.app/signup', { // Replace with your actual backend endpoint
+            const response = await fetch('https://jugaad-backend-production.up.railway.app/signup', { // Replace with your actual backend endpoint
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
