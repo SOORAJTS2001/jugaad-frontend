@@ -80,7 +80,7 @@ const Dashboard = ({pincode}) => {
             pincode: pincode
         }
 
-        fetch('https://jugaad-prod.up.railway.app/get-items', {
+        fetch('https:/jugaad-backend-production.up.railway.app/get-items', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
