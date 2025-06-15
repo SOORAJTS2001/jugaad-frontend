@@ -15,7 +15,7 @@ export const getPincodeFromLocation = async () => {
 
     console.log('User location:', lat, lon);
 
-    const reverseResponse = await fetch(`http://127.0.0.1:8000/reverse?lat=${lat}&lon=${lon}`);
+    const reverseResponse = await fetch(`https://o207ltrv.leopard-boa.ts.net/reverse?lat=${lat}&lon=${lon}`);
     if (!reverseResponse.ok) throw new Error('Reverse geocode failed');
 
     const reverseData = await reverseResponse.json();
