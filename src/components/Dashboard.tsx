@@ -20,15 +20,48 @@ import {
     TrendingUp
 } from 'lucide-react';
 import React, {useEffect, useState} from 'react';
+import {useToast} from '@/hooks/use-toast';
 
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-export function ItemActionsDropdown({onView, onEdit, onDelete}: {
-    onView: () => void,
-    onEdit: () => void,
-    onDelete: () => void
-}) {
+interface Props {
+  userId: string;
+  itemId: string;
+  emailId: string;
+}
+
+export function ItemActionsDropdown({userId, itemId,emailId,}:Props) {
+    const {toast} = useToast();
+    const handleDelete = async (userId, itemId) => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete-item`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({uid: userId, item_id: itemId,email:emailId}), // ✅ using itemId here
+            });
+
+            if (!res.ok) {
+                const {detail} = await res.json();
+                throw new Error(detail ?? 'Delete failed');
+            }
+
+            toast({
+                title: "Success",
+                description: "Successfully Deleted",
+            });
+            window.location.reload();
+        } catch (err: any) {
+            toast({
+                title: "Error",
+                description: "Could not delete the item",
+                variant: "destructive"
+            });
+            console.error(err);
+        }
+    };
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -37,13 +70,13 @@ export function ItemActionsDropdown({onView, onEdit, onDelete}: {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-md">
-                <DropdownMenuItem onClick={onView}>
+                <DropdownMenuItem>
                     View
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onEdit}>
+                <DropdownMenuItem>
                     Update
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onDelete} className="text-red-600 hover:bg-red-50 focus:bg-red-50">
+                <DropdownMenuItem onClick={() => handleDelete(userId, itemId)} className="text-red-600 hover:bg-red-50 focus:bg-red-50">
                     Delete
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -122,7 +155,8 @@ const Dashboard = ({pincode}) => {
     return (
         <div className="min-h-screen bg-background">
             {/* Navigation */}
-            <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+            <nav
+                className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
                     <div className="flex justify-between h-14 sm:h-16 items-center">
                         <div className="flex items-center space-x-2 sm:space-x-4">
@@ -130,7 +164,8 @@ const Dashboard = ({pincode}) => {
                                 <Menu className="h-4 w-4"/>
                             </Button>
                             <div className="flex items-center space-x-1 sm:space-x-2">
-                                <div className="h-6 w-6 sm:h-8 sm:w-8 bg-primary rounded-lg flex items-center justify-center">
+                                <div
+                                    className="h-6 w-6 sm:h-8 sm:w-8 bg-primary rounded-lg flex items-center justify-center">
                                     <TrendingUp className="h-3 w-3 sm:h-5 sm:w-5 text-primary-foreground"/>
                                 </div>
                                 <span className="text-lg sm:text-xl font-bold">Jugaad</span>
@@ -204,7 +239,8 @@ const Dashboard = ({pincode}) => {
                                 <Tabs defaultValue="active" className="w-full">
                                     <TabsList className="grid w-full grid-cols-3 h-9">
                                         <TabsTrigger value="active" className="text-xs sm:text-sm">Active</TabsTrigger>
-                                        <TabsTrigger value="triggered" className="text-xs sm:text-sm">Triggered</TabsTrigger>
+                                        <TabsTrigger value="triggered"
+                                                     className="text-xs sm:text-sm">Triggered</TabsTrigger>
                                         <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
                                     </TabsList>
 
@@ -215,7 +251,8 @@ const Dashboard = ({pincode}) => {
                                                 {/* Top Row - Product Info */}
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="flex items-start space-x-3 flex-1 min-w-0">
-                                                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <div
+                                                            className="h-8 w-8 sm:h-10 sm:w-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                                                             <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary"/>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
@@ -245,7 +282,8 @@ const Dashboard = ({pincode}) => {
                                                 {/* Bottom Row - Price Info and Actions */}
                                                 <div className="flex items-center justify-between gap-2">
                                                     {/* Price Info */}
-                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                                                    <div
+                                                        className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
                                                         <div className="flex items-center gap-2">
                                                             <p className="text-xs text-muted-foreground">Now:</p>
                                                             <p className="font-medium text-sm sm:text-base">₹{alert.selling_price.toLocaleString()}</p>
@@ -263,7 +301,8 @@ const Dashboard = ({pincode}) => {
                                                         >
                                                             {Math.round((1 - (alert.selling_price / alert.mrp_price)) * 100)}%
                                                         </Badge>
-                                                        <Badge variant="outline" className="text-gray-600 text-xs hidden sm:flex">
+                                                        <Badge variant="outline"
+                                                               className="text-gray-600 text-xs hidden sm:flex">
                                                             ₹{alert.max_price} &nbsp;
                                                             <Bell className="h-3 w-3 text-blue-600"/>
                                                             &nbsp;
@@ -276,9 +315,9 @@ const Dashboard = ({pincode}) => {
                                                             </a>
                                                         </Button>
                                                         <ItemActionsDropdown
-                                                            onView={() => console.log("View clicked")}
-                                                            onEdit={() => console.log("Edit clicked")}
-                                                            onDelete={() => console.log("Delete clicked")}
+                                                            userId = {user.uid}
+                                                            emailId = {user.email}
+                                                            itemId = {alert.item_id}
                                                         />
                                                     </div>
                                                 </div>
