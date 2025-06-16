@@ -22,6 +22,7 @@ import {
 import React, {useEffect, useState} from 'react';
 
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export function ItemActionsDropdown({onView, onEdit, onDelete}: {
     onView: () => void,
@@ -80,7 +81,7 @@ const Dashboard = ({pincode}) => {
             pincode: pincode
         }
 
-        fetch('https://jugaad-backend-production.up.railway.app/get-items', {
+        fetch(`${backendUrl}/get-items`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

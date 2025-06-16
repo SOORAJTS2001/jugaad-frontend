@@ -26,6 +26,9 @@ interface AlertFormData {
   notes: string;
 }
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+
 const AlertForm = () => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -65,7 +68,7 @@ const AlertForm = () => {
       };
 
       // Make the backend POST call
-      const response = await fetch('https://jugaad-backend-production.up.railway.app/add-items', { // Replace with your actual backend endpoint
+      const response = await fetch(`${backendUrl}/add-items`, { // Replace with your actual backend endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

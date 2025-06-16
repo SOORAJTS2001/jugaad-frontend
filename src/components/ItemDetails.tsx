@@ -7,25 +7,13 @@ import {ArrowLeft, Clock, ExternalLink, TrendingDown, TrendingUp} from 'lucide-r
 import AlertForm from './AlertForm';
 import {useAuth} from "@/hooks/useAuth.tsx";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 function formatTimestamp(isoString) {
-    try {
-        const cleanIso = isoString.split('.')[0]; // Remove microseconds
-        const dateUtc = new Date(cleanIso + 'Z'); // Treat as UTC
-
-        if (isNaN(dateUtc.getTime())) return "Invalid date";
-
-        const istOffsetMs = 5.5 * 60 * 60 * 1000; // 5.5 hours in ms
-        const dateIST = new Date(dateUtc.getTime() + istOffsetMs); // ✅ getTime() returns number
-
-        return dateIST.toLocaleString('en-IN', {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-            timeZone: 'Asia/Kolkata', // Optional (but ensures clarity)
-        });
-    } catch (err) {
-        return "Error formatting date";
-    }
+    return new Date(isoString).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata',});
 }
 
 
@@ -60,6 +48,7 @@ interface ItemData {
         selling_price: number;
     }>;
     availability: 'in-stock' | 'out-of-stock' | 'limited';
+
 }
 
 const ItemDetails = () => {
@@ -80,7 +69,7 @@ const ItemDetails = () => {
         }
         const fetchItemDetails = async () => {
             setLoading(true);
-            fetch('https://jugaad-backend-production.up.railway.app/get-item', {
+            fetch(`${backendUrl}/get-item`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -89,6 +78,10 @@ const ItemDetails = () => {
             })
                 .then((response) => response.json())
                 .then((response) => {
+
+                    dayjs.extend(relativeTime);
+
+                    const last_updated = dayjs(response.last_updated_timestamp).fromNow();
                     // Mock data based on ID
                     const Item: ItemData = {
                         id: id || '1',
@@ -99,7 +92,7 @@ const ItemDetails = () => {
                         url: response.source_url,
                         image: response.image_url,
                         site: 'JioMart',
-                        lastUpdated: '2 minutes ago',
+                        lastUpdated: last_updated,
                         priceHistory: response.logs,
                         availability: 'in-stock'
                     };
