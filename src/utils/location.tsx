@@ -14,8 +14,8 @@ export const getPincodeFromLocation = async () => {
     const lon = coords.longitude;
 
     console.log('User location:', lat, lon);
-
-    const reverseResponse = await fetch(`https://jugaad-backend-production.up.railway.app/reverse?lat=${lat}&lon=${lon}`);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const reverseResponse = await fetch(`${backendUrl}/reverse?lat=${lat}&lon=${lon}`);
     if (!reverseResponse.ok) throw new Error('Reverse geocode failed');
 
     const reverseData = await reverseResponse.json();

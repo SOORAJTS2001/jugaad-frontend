@@ -13,7 +13,6 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 function formatTimestamp(isoString) {
-    isoString = `${isoString}Z`
     return new Date(isoString).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata',});
 }
 
@@ -82,7 +81,7 @@ const ItemDetails = () => {
 
                     dayjs.extend(relativeTime);
 
-                    const last_updated = dayjs(`${response.last_updated_timestamp}Z`).fromNow();
+                    const last_updated = dayjs(response.last_updated_timestamp).fromNow();
                     // Mock data based on ID
                     const Item: ItemData = {
                         id: id || '1',

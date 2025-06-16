@@ -89,21 +89,6 @@ const Dashboard = ({pincode}) => {
     console.log(pincode)
     const [recentAlerts, setRecentAlerts] = useState([]);
 
-    // Load from localStorage on component mount
-    useEffect(() => {
-        const storedAlerts = localStorage.getItem(`recentAlerts_${user?.uid}`);
-        if (storedAlerts) {
-            setRecentAlerts(JSON.parse(storedAlerts));
-        }
-    }, [user?.uid]);
-
-    // Save to localStorage whenever recentAlerts changes
-    useEffect(() => {
-        if (user?.uid && recentAlerts.length > 0) {
-            localStorage.setItem(`recentAlerts_${user.uid}`, JSON.stringify(recentAlerts));
-        }
-    }, [recentAlerts, user?.uid]);
-
     useEffect(() => {
         if (!user) return; // Wait for user to be authenticated
 
