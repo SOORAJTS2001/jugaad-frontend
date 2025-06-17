@@ -3,34 +3,38 @@ import {Link, useParams} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Badge} from '@/components/ui/badge';
-import {ArrowLeft, Clock, ExternalLink, TrendingDown, TrendingUp} from 'lucide-react';
+import {ArrowLeft, Clock, ExternalLink, Package, TrendingDown, TrendingUp} from 'lucide-react';
 import AlertForm from './AlertForm';
 import {useAuth} from "@/hooks/useAuth.tsx";
-import { ScrollArea } from '@/components/ui/scroll-area';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {ChartContainer, ChartTooltip, ChartTooltipContent} from '@/components/ui/chart';
+import {Line, LineChart, XAxis, YAxis} from 'recharts';
+
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 function formatTimestamp(isoString) {
     return new Date(isoString).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata',});
 }
 
 
-function ItemImage({ src, alt }) {
-  const [imgSrc, setImgSrc] = useState(src);
-  const fallback = "/placeholder.svg"; // your fallback image path
+function ItemImage({src, alt}) {
+    const [imgSrc, setImgSrc] = useState(src);
+    const fallback = "/placeholder.svg"; // your fallback image path
 
-  return (
-    <div className="aspect-square bg-muted rounded-lg mb-4 flex items-center justify-center">
-      <img
-        src={imgSrc}
-        alt={alt}
-        onError={() => setImgSrc(fallback)}
-        className="max-w-full max-h-full object-contain"
-      />
-    </div>
-  );
+    return (
+        <div className="aspect-square bg-muted rounded-lg mb-4 flex items-center justify-center">
+            <img
+                src={imgSrc}
+                alt={alt}
+                onError={() => setImgSrc(fallback)}
+                className="max-w-full max-h-full object-contain"
+            />
+        </div>
+    );
 }
 
 interface ItemData {
@@ -47,9 +51,21 @@ interface ItemData {
         last_updated_timestamp: string;
         selling_price: number;
     }>;
+    maxOrderQuantity: string;
     availability: 'in-stock' | 'out-of-stock' | 'limited';
 
 }
+
+const chartConfig = {
+    selling_price: {
+        label: "Price",
+        color: "#22c55e",
+    },
+}
+
+const formatPrice = (price: number) => {
+    return `₹${price.toLocaleString()}`;
+};
 
 const ItemDetails = () => {
     const {user} = useAuth();
@@ -94,6 +110,7 @@ const ItemDetails = () => {
                         site: 'JioMart',
                         lastUpdated: last_updated,
                         priceHistory: response.logs,
+                        maxOrderQuantity: response.max_order_quantity,
                         availability: 'in-stock'
                     };
                     setItem(Item);
@@ -130,6 +147,12 @@ const ItemDetails = () => {
             </div>
         );
     }
+    // Prepare chart data
+    const chartData = item.priceHistory.map(entry => ({
+        date: formatTimestamp(entry.last_updated_timestamp),
+        selling_price: entry.selling_price,
+        fullDate: entry.last_updated_timestamp
+    }));
 
     return (
         <div className="min-h-screen bg-background">
@@ -155,7 +178,7 @@ const ItemDetails = () => {
                     <div className="space-y-6">
                         <Card>
                             <CardContent className="p-6">
-                                <ItemImage src={item.image} alt={item.name} />
+                                <ItemImage src={item.image} alt={item.name}/>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Badge variant="secondary">{item.site}</Badge>
                                     <Badge
@@ -165,9 +188,15 @@ const ItemDetails = () => {
                                     </Badge>
                                 </div>
                                 <h1 className="text-2xl font-bold mb-4">{item.name}</h1>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Clock className="h-4 w-4"/>
-                                    Last updated: {item.lastUpdated}
+                                <div className="text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="h-4 w-4"/>
+                                        <span>Last updated: {item.lastUpdated}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Package className="h-4 w-4"/>
+                                        <span>Max order quantity: {item.maxOrderQuantity}</span>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -207,31 +236,31 @@ const ItemDetails = () => {
                                 <CardDescription>Track price changes over time</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                                                                <ScrollArea className="h-48 pr-4">
+                                <ScrollArea className="h-48 pr-4">
 
-                                <div className="space-y-3">
-                                    {item.priceHistory.map((entry, index) => (
-                                        <div key={index}
-                                             className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div className="space-y-3">
+                                        {item.priceHistory.map((entry, index) => (
+                                            <div key={index}
+                                                 className="flex items-center justify-between p-3 border rounded-lg">
                                             <span
                                                 className="text-sm text-muted-foreground">{formatTimestamp(entry.last_updated_timestamp)}</span>
-                                            <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2">
                                                 <span
                                                     className="font-medium">₹{entry.selling_price.toLocaleString()}</span>
-                                                {index > 0 && (
-                                                    <div className="flex items-center">
-                                                        {entry.selling_price < item.priceHistory[index - 1].selling_price ? (
-                                                            <TrendingDown className="h-4 w-4 text-green-500"/>
-                                                        ) : (
-                                                            <TrendingUp className="h-4 w-4 text-red-500"/>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                    {index > 0 && (
+                                                        <div className="flex items-center">
+                                                            {entry.selling_price < item.priceHistory[index - 1].selling_price ? (
+                                                                <TrendingDown className="h-4 w-4 text-green-500"/>
+                                                            ) : (
+                                                                <TrendingUp className="h-4 w-4 text-red-500"/>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                                                                 </ScrollArea>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
 
                             </CardContent>
                         </Card>
@@ -250,6 +279,61 @@ const ItemDetails = () => {
                                 <AlertForm/>
                             </CardContent>
                         </Card>
+                        {/* Price History Chart */}
+                        {/* Price History Chart - Full Width */}
+                        <div className="mt-6 lg:mt-8">
+                            <Card>
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="text-lg sm:text-xl">Price Trend</CardTitle>
+                                    <CardDescription>Visual representation of price changes over time</CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-4 sm:p-6">
+                                    <ChartContainer config={chartConfig}
+                                                    className="h-[250px] sm:h-[300px] lg:h-[400px] w-full">
+                                        <LineChart
+                                            data={chartData}
+                                            margin={{
+                                                top: 20,
+                                                right: 20,
+                                                left: 20,
+                                                bottom: 20
+                                            }}
+                                        >
+                                            <XAxis
+                                                dataKey="date"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{fontSize: 10}}
+                                                className="text-xs"
+                                            />
+                                            <YAxis
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{fontSize: 10}}
+                                                tickFormatter={formatPrice}
+                                                className="text-xs"
+                                                width={60}
+                                            />
+                                            <ChartTooltip
+                                                content={<ChartTooltipContent
+                                                    formatter={(value) => [formatPrice(value as number), "Price"]}
+                                                    labelFormatter={(label) => `Date: ${label}`}
+                                                />}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="selling_price"
+                                                stroke="var(--color-selling_price)"
+                                                strokeWidth={2}
+                                                dot={{fill: "var(--color-selling_price)", strokeWidth: 2, r: 3}}
+                                                activeDot={{r: 5, stroke: "var(--color-selling_price)", strokeWidth: 2}}
+                                            />
+                                        </LineChart>
+                                    </ChartContainer>
+                                </CardContent>
+                            </Card>
+                        </div>
+
                     </div>
                 </div>
             </div>
