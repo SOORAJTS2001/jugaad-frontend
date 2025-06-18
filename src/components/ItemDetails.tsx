@@ -146,11 +146,14 @@ const ItemDetails = () => {
     }
 
     // Prepare chart data
-    const chartData = item.priceHistory.map(entry => ({
-        date: formatTimestamp(entry.last_updated_timestamp),
-        selling_price: entry.selling_price,
-        fullDate: entry.last_updated_timestamp
-    }));
+    const chartData = item.priceHistory
+        .slice() // clone to avoid mutating original
+        .reverse()
+        .map(entry => ({
+            date: formatTimestamp(entry.last_updated_timestamp),
+            selling_price: entry.selling_price,
+            fullDate: entry.last_updated_timestamp
+        }));
 
     return (
         <div className="min-h-screen bg-background">
@@ -212,8 +215,10 @@ const ItemDetails = () => {
                             <CardContent>
                                 <div className="space-y-4">
                                     <div className="flex items-baseline gap-2 flex-wrap">
-                                        <span className="text-2xl sm:text-3xl font-bold text-primary">₹{item.currentPrice.toLocaleString()}</span>
-                                        <span className="text-base sm:text-lg text-muted-foreground line-through">₹{item.originalPrice.toLocaleString()}</span>
+                                        <span
+                                            className="text-2xl sm:text-3xl font-bold text-primary">₹{item.currentPrice.toLocaleString()}</span>
+                                        <span
+                                            className="text-base sm:text-lg text-muted-foreground line-through">₹{item.originalPrice.toLocaleString()}</span>
                                     </div>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <Badge variant="default" className="bg-green-500">
@@ -237,12 +242,14 @@ const ItemDetails = () => {
                                 <ScrollArea className="h-48 sm:h-56 pr-2 sm:pr-4">
                                     <div className="space-y-3">
                                         {item.priceHistory.map((entry, index) => (
-                                            <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                                            <div key={index}
+                                                 className="flex items-center justify-between p-3 border rounded-lg">
                                                 <span className="text-sm text-muted-foreground break-words">
                                                     {formatTimestamp(entry.last_updated_timestamp)}
                                                 </span>
                                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                                    <span className="font-medium">₹{entry.selling_price.toLocaleString()}</span>
+                                                    <span
+                                                        className="font-medium">₹{entry.selling_price.toLocaleString()}</span>
                                                     {index > 0 && (
                                                         <div className="flex items-center">
                                                             {entry.selling_price < item.priceHistory[index - 1].selling_price ? (

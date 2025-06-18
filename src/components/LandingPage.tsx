@@ -116,9 +116,7 @@ const LandingPage = ({pincode}) => {
                                 <span className="text-primary block md:inline"> Price Drop</span>
                             </h1>
                             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                                Set intelligent price alerts for stocks, crypto, and products.
-                                Get notified instantly when prices hit your target with our AI-powered monitoring
-                                system.
+                                Set intelligent price alerts for your stuffs at JioMart!
                             </p>
                         </div>
 
