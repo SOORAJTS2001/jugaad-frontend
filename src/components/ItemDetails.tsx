@@ -312,7 +312,7 @@ const ItemDetails = () => {
                                     />
                                     <ChartTooltip
                                         content={<ChartTooltipContent
-                                            formatter={(value) => [formatPrice(value as number), "Price"]}
+                                            formatter={(value) => [formatPrice(value as number)]}
                                             labelFormatter={(label) => `Date: ${label}`}
                                         />}
                                     />
@@ -321,8 +321,8 @@ const ItemDetails = () => {
                                         dataKey="selling_price"
                                         stroke="var(--color-selling_price)"
                                         strokeWidth={2}
-                                        dot={{fill: "var(--color-selling_price)", strokeWidth: 2, r: 3}}
-                                        activeDot={{r: 5, stroke: "var(--color-selling_price)", strokeWidth: 2}}
+                                        dot={false}
+                                        activeDot={false}
                                     />
                                 </LineChart>
                             </ChartContainer>
