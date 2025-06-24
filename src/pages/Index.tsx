@@ -12,8 +12,8 @@ const Index = () => {
 
     useEffect(() => {
         const fetchPincode = async () => {
-            const pin = await getPincodeFromLocation();
-            setPincode(pin);
+            const result = await getPincodeFromLocation();
+            setPincode(result.pincode);
         };
 
         fetchPincode(); // auto-run on mount

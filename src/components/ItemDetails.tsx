@@ -3,7 +3,7 @@ import {Link, useParams} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Badge} from '@/components/ui/badge';
-import {ArrowLeft, Clock, ExternalLink, Package, TrendingDown, TrendingUp} from 'lucide-react';
+import {ArrowLeft, Clock, ExternalLink, MapPin, Package, Star, TrendingDown, TrendingUp} from 'lucide-react';
 import AlertForm from './AlertForm';
 import {useAuth} from "@/hooks/useAuth.tsx";
 import {ScrollArea} from '@/components/ui/scroll-area';
@@ -12,6 +12,7 @@ import {Line, LineChart, XAxis, YAxis} from 'recharts';
 
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import {getPincodeFromLocation} from "@/utils/location.tsx";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -49,6 +50,11 @@ interface ItemData {
         last_updated_timestamp: string;
         selling_price: number;
     }>;
+    metadata: {
+        rating: number;
+        summary: string;
+        distance: number
+    };
     maxOrderQuantity: string;
     availability: 'in-stock' | 'out-of-stock' | 'limited';
 }
@@ -69,54 +75,80 @@ const ItemDetails = () => {
     const {id} = useParams();
     const [item, setItem] = useState<ItemData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [lat, setLat] = useState(null);
+
+    const [lon, setLng] = useState(null);
 
     useEffect(() => {
-        if (!user) return; // Wait for user to be authenticated
+        if (!user) return;
+
+        const fetchPincode = async () => {
+            try {
+                const result = await getPincodeFromLocation();
+                setLat(result.lat);
+                setLng(result.lon);
+            } catch (err) {
+                console.error("Failed to get location:", err);
+            }
+        };
+
+        fetchPincode();
+    }, [user]); // Run once when user is ready
+
+    useEffect(() => {
+        // Wait for user, id, and lat/lng to be available
+        if (!user || !id || lat === null || lon === null) return;
 
         const data = {
             uid: user.uid,
             email: user.email,
             username: user.displayName,
-            pincode: "682020",
-            item_id: id
-        }
+            item_id: id,
+            lat: lat,
+            lng: lon,
+        };
+
         const fetchItemDetails = async () => {
             setLoading(true);
-            fetch(`${backendUrl}/get-item`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-                .then((response) => response.json())
-                .then((response) => {
+            try {
+                const response = await fetch(`${backendUrl}/get-item`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+                const result = await response.json();
 
-                    dayjs.extend(relativeTime);
+                dayjs.extend(relativeTime);
+                const last_updated = dayjs(result.last_updated_timestamp).fromNow();
+                console.log(result.metadata)
+                const Item = {
+                    id: id || '1',
+                    name: result.name,
+                    currentPrice: result.selling_price,
+                    originalPrice: result.mrp_price,
+                    discount: result.discount_percent,
+                    url: result.source_url,
+                    image: result.image_url,
+                    site: 'JioMart',
+                    lastUpdated: last_updated,
+                    priceHistory: result.logs,
+                    maxOrderQuantity: result.max_order_quantity,
+                    availability: result.is_available ? 'in-stock' : 'out-of-stock',
+                    metadata: result.item_metadata,
+                };
 
-                    const last_updated = dayjs(response.last_updated_timestamp).fromNow();
-                    // Mock data based on ID
-                    const Item: ItemData = {
-                        id: id || '1',
-                        name: response.name,
-                        currentPrice: response.selling_price,
-                        originalPrice: response.mrp_price,
-                        discount: response.discount_percent,
-                        url: response.source_url,
-                        image: response.image_url,
-                        site: 'JioMart',
-                        lastUpdated: last_updated,
-                        priceHistory: response.logs,
-                        maxOrderQuantity: response.max_order_quantity,
-                        availability: 'in-stock'
-                    };
-                    setItem(Item);
-                })
-            setLoading(false);
+                setItem(Item);
+            } catch (error) {
+                console.error("Failed to fetch item details:", error);
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchItemDetails();
-    }, [user, id]);
+    }, [user, id, lat, lon]);
 
     if (loading) {
         return (
@@ -184,6 +216,11 @@ const ItemDetails = () => {
                                 <ItemImage src={item.image} alt={item.name}/>
                                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                                     <Badge variant="secondary">{item.site}</Badge>
+                                    <Badge variant="secondary">
+                                        <Star className="h-4 w-4 flex-shrink-0 text-black mr-1"/>
+                                        {item.metadata.rating}
+                                    </Badge>
+
                                     <Badge
                                         variant={item.availability === 'in-stock' ? 'default' : 'destructive'}
                                     >
@@ -196,21 +233,40 @@ const ItemDetails = () => {
                                         <Clock className="h-4 w-4 flex-shrink-0"/>
                                         <span className="break-words">Last updated: {item.lastUpdated}</span>
                                     </div>
+
                                     <div className="flex items-center gap-2">
                                         <Package className="h-4 w-4 flex-shrink-0"/>
                                         <span className="break-words">Max order quantity: {item.maxOrderQuantity}</span>
                                     </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 flex-shrink-0"/>
+                                        <span
+                                            className="break-words">Delivery distance: {item.metadata.distance} KM</span>
+                                    </div>
+
+
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* Price Info and Actions */}
-                    <div className="space-y-4 lg:space-y-6">
+                    <div className="space-y-4 lg:space-y-3">
                         <Card>
                             <CardHeader className="pb-4">
-                                <CardTitle className="text-lg sm:text-xl">Current Price</CardTitle>
-                                <CardDescription>Live pricing information</CardDescription>
+                                <CardDescription className="text-muted-foreground text-sm">
+                                    {item.metadata?.summary && (
+                                        <p className="text-gray-700">
+                                            <span className="text-2xl font-serif leading-none mr-1">“</span>
+                                            {item.metadata.summary}
+                                            <span className="text-2xl font-serif leading-none ml-1">”</span>
+                                        </p>
+                                    )}
+
+                                </CardDescription>
+                                <CardTitle className="space-y-4 text-lg sm:text-xl">Current Price</CardTitle>
+
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">

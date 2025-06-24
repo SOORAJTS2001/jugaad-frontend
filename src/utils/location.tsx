@@ -19,7 +19,7 @@ export const getPincodeFromLocation = async () => {
     if (!reverseResponse.ok) throw new Error('Reverse geocode failed');
 
     const reverseData = await reverseResponse.json();
-    return reverseData.pincode;
+    return {pincode:reverseData.pincode, lat, lon};
   } catch (error) {
     console.error('Location or reverse geocoding failed:', error);
     return null; // fallback if failed

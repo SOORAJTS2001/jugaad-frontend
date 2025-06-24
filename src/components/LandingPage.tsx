@@ -116,7 +116,7 @@ const LandingPage = ({pincode}) => {
                                 <span className="text-primary block md:inline"> Price Drop</span>
                             </h1>
                             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                                Set intelligent price alerts for your stuffs at JioMart!
+                                Set intelligent price alerts for your stuffs at JioMart!n
                             </p>
                         </div>
 
