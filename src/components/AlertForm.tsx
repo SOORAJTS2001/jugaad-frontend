@@ -67,18 +67,21 @@ const AlertForm = () => {
             };
 
             // Make the backend POST call
-            const response = await fetch(`${backendUrl}/add-items`, { // Replace with your actual backend endpoint
+            await fetch(`${backendUrl}/add-items`, { // Replace with your actual backend endpoint
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data),
             });
-            console.log('Alert created:', response);
+
             toast({
                 title: "Alert Created Successfully!",
                 description: "You'll be notified when price conditions are met.",
             });
+
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
             window.location.reload();
 
             // Reset form and close dialog

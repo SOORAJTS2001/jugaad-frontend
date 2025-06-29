@@ -27,19 +27,19 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 interface Props {
-  userId: string;
-  itemId: string;
-  emailId: string;
+    userId: string;
+    itemId: string;
+    emailId: string;
 }
 
-export function ItemActionsDropdown({userId, itemId,emailId,}:Props) {
+export function ItemActionsDropdown({userId, itemId, emailId,}: Props) {
     const {toast} = useToast();
     const handleDelete = async (userId, itemId) => {
         try {
             const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete-item`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({uid: userId, item_id: itemId,email:emailId}), // ✅ using itemId here
+                body: JSON.stringify({uid: userId, item_id: itemId, email: emailId}), // ✅ using itemId here
             });
 
             if (!res.ok) {
@@ -51,6 +51,7 @@ export function ItemActionsDropdown({userId, itemId,emailId,}:Props) {
                 title: "Success",
                 description: "Successfully Deleted",
             });
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             window.location.reload();
         } catch (err: any) {
             toast({
@@ -76,7 +77,8 @@ export function ItemActionsDropdown({userId, itemId,emailId,}:Props) {
                 <DropdownMenuItem>
                     Update
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDelete(userId, itemId)} className="text-red-600 hover:bg-red-50 focus:bg-red-50">
+                <DropdownMenuItem onClick={() => handleDelete(userId, itemId)}
+                                  className="text-red-600 hover:bg-red-50 focus:bg-red-50">
                     Delete
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -86,7 +88,6 @@ export function ItemActionsDropdown({userId, itemId,emailId,}:Props) {
 
 const Dashboard = ({pincode}) => {
     const {user} = useAuth();
-    console.log(pincode)
     const [recentAlerts, setRecentAlerts] = useState([]);
 
     useEffect(() => {
@@ -300,9 +301,9 @@ const Dashboard = ({pincode}) => {
                                                             </a>
                                                         </Button>
                                                         <ItemActionsDropdown
-                                                            userId = {user.uid}
-                                                            emailId = {user.email}
-                                                            itemId = {alert.item_id}
+                                                            userId={user.uid}
+                                                            emailId={user.email}
+                                                            itemId={alert.item_id}
                                                         />
                                                     </div>
                                                 </div>

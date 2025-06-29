@@ -13,7 +13,6 @@ export const getPincodeFromLocation = async () => {
     const lat = coords.latitude;
     const lon = coords.longitude;
 
-    console.log('User location:', lat, lon);
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const reverseResponse = await fetch(`${backendUrl}/reverse?lat=${lat}&lon=${lon}`);
     if (!reverseResponse.ok) throw new Error('Reverse geocode failed');

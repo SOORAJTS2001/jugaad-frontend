@@ -122,7 +122,6 @@ const ItemDetails = () => {
 
                 dayjs.extend(relativeTime);
                 const last_updated = dayjs(result.last_updated_timestamp).fromNow();
-                console.log(result.metadata)
                 const Item = {
                     id: id || '1',
                     name: result.name,

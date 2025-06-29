@@ -8,7 +8,6 @@ import {ArrowRight, BarChart3, Bell, Shield, Target, TrendingUp, Zap} from 'luci
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const LandingPage = ({pincode}) => {
-    console.log(pincode)
     const [isSigningIn, setIsSigningIn] = useState(false);
 
     const handleGoogleSignIn = async () => {
@@ -36,8 +35,7 @@ const LandingPage = ({pincode}) => {
             });
 
             if (response.ok) {
-                const responseData = await response.json();
-                console.log('Backend call successful:', responseData);
+                await response.json();
                 // Handle successful backend response (e.g., redirect user, show success message)
             } else {
                 console.error('Backend call failed:', response.statusText);
