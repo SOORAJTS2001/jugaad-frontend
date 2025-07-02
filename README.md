@@ -1,73 +1,94 @@
-# Welcome to your Lovable project
+<p align="center">
+  <img src="public/favicon.ico" alt="JioMart Logo" width="150"/>
+</p>
 
-## Project info
+<h1 align="center">Jugaad - JioMart Price Tracker</h1>
 
-**URL**: https://lovable.dev/projects/54fc90ae-7cb7-4e9b-b987-5e1aa7de5182
+A lightweight and modern web application that allows users to **track product prices on JioMart** and get real-time updates. Built for speed and aesthetics using **Vite**, **React**, **TailwindCSS**, and **shadcn/ui** components.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🚀 Features
 
-**Use Lovable**
+- 🔍 Search and monitor products from JioMart
+- 📉 Track historical price trends
+- 🔔 Get notified on price drops (WIP)
+- 💡 Clean and responsive UI using **shadcn/ui**
+- ⚡ Blazing fast performance with **Vite**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/54fc90ae-7cb7-4e9b-b987-5e1aa7de5182) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🧑‍💻 Tech Stack
 
-**Use your preferred IDE**
+- **Frontend**: [React](https://reactjs.org/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: [TailwindCSS](https://tailwindcss.com/)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.dev/)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-Follow these steps:
+## 📁 Project Structure
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```
+jiomart-price-tracker/
+├── dist/                       # Build output (ignored in Git)
+├── examples/                   # Screenshots for documentation
+├── node_modules/               # Dependencies
+├── public/                     # Static assets
+├── src/                        # Main application source code
+│   ├── components/             # Reusable UI components
+│   ├── hooks/                  # Custom React hooks
+│   ├── lib/                    # Utilities, constants, types, etc.
+│   ├── pages/                  # Route-level React components
+│   ├── services/               # API clients or external integrations
+│   ├── utils/                  # Helper functions/utilities
+│   ├── App.tsx                 # Root app component
+│   ├── main.tsx                # Vite entry point
+│   └── index.css               # Global styles
+├── .env                        # Environment variables
+├── index.html                  # HTML entry point for Vite
+├── README.md                   # Project documentation
+├── package.json                # Project metadata and scripts
+├── tailwind.config.ts          # TailwindCSS configuration
+├── vite.config.ts              # Vite configuration
+├── vercel.json                 # Vercel deployment configuration
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 📦 Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+git clone https://github.com/SOORAJTS2001/jugaad-frontend .
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🖼️ UI Snapshots
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 🔹 Landing & Listing Pages
+<table>
+  <tr>
+    <td align="center"><b>Landing Page</b></td>
+    <td align="center"><b>Listing Page</b></td>
+    <td align="center"><b>Alert Page</b></td>
+  </tr>
+  <tr>
+    <td><img src="examples/landing_page.png" width="250"/></td>
+    <td><img src="examples/listing_page.png" width="250"/></td>
+    <td><img src="examples/alert_page.png" width="250"/></td>
+  </tr>
+</table>
 
-**Use GitHub Codespaces**
+### 🔹 Detail Page
+<table>
+  <tr>
+    <td align="center"><b>Detail Page</b></td>
+    <td align="center"><b>Graph View</b></td>
+  </tr>
+  <tr>
+    <td><img src="examples/detail_page.png" width="250"/></td>
+    <td><img src="examples/detail_page_graph.png" width="250"/></td>
+  </tr>
+</table>
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/54fc90ae-7cb7-4e9b-b987-5e1aa7de5182) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)

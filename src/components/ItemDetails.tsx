@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Link, useParams} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
@@ -9,7 +9,7 @@ import {useAuth} from "@/hooks/useAuth.tsx";
 import {ScrollArea} from '@/components/ui/scroll-area';
 import {ChartContainer, ChartTooltip, ChartTooltipContent} from '@/components/ui/chart';
 import {Line, LineChart, XAxis, YAxis} from 'recharts';
-
+import '../utils/loader.css'
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {getPincodeFromLocation} from "@/utils/location.tsx";
@@ -153,8 +153,16 @@ const ItemDetails = () => {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Loading item details...</p>
+                    <div className="text-white text-xl">
+                        <div className="loader">
+                            <div className="loader__bar"></div>
+                            <div className="loader__bar"></div>
+                            <div className="loader__bar"></div>
+                            <div className="loader__bar"></div>
+                            <div className="loader__bar"></div>
+                            <div className="loader__ball"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );

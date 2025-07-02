@@ -1,6 +1,8 @@
 export const getPincodeFromLocation = async () => {
   const getLocation = () =>
     new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+    }, 10000);
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve(pos.coords),
         (err) => reject(err),

@@ -86,7 +86,7 @@ export function ItemActionsDropdown({userId, itemId, emailId,}: Props) {
     );
 }
 
-const Dashboard = ({pincode}) => {
+const Dashboard = () => {
     const {user} = useAuth();
     const [recentAlerts, setRecentAlerts] = useState([]);
 
@@ -97,7 +97,6 @@ const Dashboard = ({pincode}) => {
             uid: user.uid,
             email: user.email,
             username: user.displayName,
-            pincode: pincode
         }
 
         fetch(`${backendUrl}/get-items`, {
@@ -128,7 +127,7 @@ const Dashboard = ({pincode}) => {
             .catch((error) => {
                 console.error("Error fetching items:", error);
             });
-    }, [user, pincode]); // Add pincode as dependency
+    }, [user]); // Add pincode as dependency
 
     const handleSignOut = async () => {
         try {
