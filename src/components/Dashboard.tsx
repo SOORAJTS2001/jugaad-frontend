@@ -7,6 +7,7 @@ import {signOut} from '@/services/authService';
 import {useAuth} from '@/hooks/useAuth';
 import {Link} from 'react-router-dom';
 import AlertForm from './AlertForm';
+import {MiniPriceChart} from "@/utils/MiniPriceChart.tsx";
 import {
     Activity,
     AlertCircle,
@@ -89,6 +90,8 @@ export function ItemActionsDropdown({userId, itemId, emailId,}: Props) {
 const Dashboard = () => {
     const {user} = useAuth();
     const [recentAlerts, setRecentAlerts] = useState([]);
+    const [priceHistories, setPriceHistories] = useState({});
+
 
     useEffect(() => {
         if (!user) return; // Wait for user to be authenticated
@@ -122,7 +125,21 @@ const Dashboard = () => {
                     max_offer: item.max_offer
                 }));
 
-                setRecentAlerts(alerts); // ✅ Save to state and localStorage via useEffect
+                setRecentAlerts(alerts); // Set alert cards
+
+                // Build priceHistories object
+                const priceHistoriesObj = {};
+                items.forEach(item => {
+                    priceHistoriesObj[item.item_id] = item.logs
+                        .slice() // Make a shallow copy to avoid mutating the original
+                        .reverse() // Reverse the order
+                        .map(log => ({
+                            price: log.selling_price,
+                            timestamp: log.last_updated_timestamp
+                        }));
+                });
+
+                setPriceHistories(priceHistoriesObj); // Set all histories at once
             })
             .catch((error) => {
                 console.error("Error fetching items:", error);
@@ -241,26 +258,43 @@ const Dashboard = () => {
                                                             <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary"/>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <Link
-                                                                    to={`/item/${alert.item_id}`}
-                                                                    className="font-medium hover:text-primary transition-colors text-sm sm:text-base line-clamp-2 flex-1 block truncate max-w-[200px]"
-                                                                    title={alert.name}
-                                                                >
-                                                                    {alert.name}
-                                                                </Link>
-                                                                <Badge
-                                                                    variant={alert.is_available === 'triggered' ? 'default' : 'secondary'}
-                                                                    className="text-xs flex-shrink-0"
-                                                                >
-                                                                    {alert.is_available === 'triggered' ?
-                                                                        <CheckCircle2 className="h-3 w-3 mr-1"/> :
-                                                                        <AlertCircle className="h-3 w-3 mr-1"/>}
-                                                                    {alert.is_available}
-                                                                </Badge>
+                                                            <div
+                                                                className="flex items-center justify-between gap-2 mb-1">
+                                                                {/* Left Side: Name + Badge */}
+                                                                <div className="flex items-center gap-2 min-w-0">
+                                                                    <Link
+                                                                        to={`/item/${alert.item_id}`}
+                                                                        className="font-medium hover:text-primary transition-colors text-sm sm:text-base line-clamp-2 block truncate max-w-[200px] flex-1"
+                                                                        title={alert.name}
+                                                                    >
+                                                                        {alert.name}
+                                                                    </Link>
+                                                                    <Badge
+                                                                        variant={alert.is_available === 'triggered' ? 'default' : 'secondary'}
+                                                                        className="text-xs flex-shrink-0"
+                                                                    >
+                                                                        {alert.is_available === 'triggered' ?
+                                                                            <CheckCircle2 className="h-3 w-3 mr-1"/> :
+                                                                            <AlertCircle className="h-3 w-3 mr-1"/>}
+                                                                        {alert.is_available}
+                                                                    </Badge>
+                                                                </div>
+
+                                                                {/* Right Side: Mini Chart */}
+                                                                <div className="flex-shrink-0">
+                                                                    <MiniPriceChart
+                                                                        data={priceHistories[alert.item_id] || []}
+                                                                        width={80}
+                                                                        height={32}
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                            <p className="text-xs sm:text-sm text-muted-foreground truncate">{alert.category}</p>
+
+                                                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                                                                {alert.category}
+                                                            </p>
                                                         </div>
+
                                                     </div>
                                                 </div>
 
