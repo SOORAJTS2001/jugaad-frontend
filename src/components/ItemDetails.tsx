@@ -1,11 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {Link, useParams} from 'react-router-dom';
+import {Link, useParams, useSearchParams} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Badge} from '@/components/ui/badge';
 import {ArrowLeft, Clock, ExternalLink, MapPin, Package, Star, TrendingDown, TrendingUp} from 'lucide-react';
 import AlertForm from './AlertForm';
-import {useAuth} from "@/hooks/useAuth.tsx";
 import {ScrollArea} from '@/components/ui/scroll-area';
 import {ChartContainer, ChartTooltip, ChartTooltipContent} from '@/components/ui/chart';
 import {Line, LineChart, XAxis, YAxis} from 'recharts';
@@ -13,6 +12,7 @@ import '../utils/loader.css'
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {getPincodeFromLocation} from "@/utils/location.tsx";
+import {useToast} from "@/hooks/use-toast.ts";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -71,8 +71,10 @@ const formatPrice = (price: number) => {
 };
 
 const ItemDetails = () => {
-    const {user} = useAuth();
     const {id} = useParams();
+    const [searchParams] = useSearchParams();
+    const pincode = searchParams.get("pincode");
+    const {toast, dismiss} = useToast();
     const [item, setItem] = useState<ItemData | null>(null);
     const [loading, setLoading] = useState(true);
     const [lat, setLat] = useState(null);
@@ -80,29 +82,35 @@ const ItemDetails = () => {
     const [lon, setLng] = useState(null);
 
     useEffect(() => {
-        if (!user) return;
 
         const fetchPincode = async () => {
             try {
                 const result = await getPincodeFromLocation();
-                setLat(result.lat);
-                setLng(result.lon);
+                if (result?.lat != null && result?.lon != null) {
+                    setLat(result.lat);
+                    setLng(result.lon);
+                } else {
+                    toast({
+                        title: "Location Required",
+                        description: "Please provide your location access to show more features!",
+                        variant: "destructive",
+                        duration: Infinity,
+                        className: "text-sm px-3 py-2",
+
+                    });
+                    console.warn("Location unavailable — skipping lat/lng set.");
+                }
             } catch (err) {
-                console.error("Failed to get location:", err);
+                console.warn("Failed to get location:", err);
             }
         };
 
         fetchPincode();
-    }, [user]); // Run once when user is ready
+    }, []);
 
     useEffect(() => {
-        // Wait for user, id, and lat/lng to be available
-        if (!user || !id || lat === null || lon === null) return;
-
         const data = {
-            uid: user.uid,
-            email: user.email,
-            username: user.displayName,
+            pincode: pincode,
             item_id: id,
             lat: lat,
             lng: lon,
@@ -122,7 +130,7 @@ const ItemDetails = () => {
 
                 dayjs.extend(relativeTime);
                 const last_updated = dayjs(result.last_updated_timestamp).fromNow();
-                const Item = {
+                const Item: ItemData = {
                     id: id || '1',
                     name: result.name,
                     currentPrice: result.selling_price,
@@ -147,7 +155,7 @@ const ItemDetails = () => {
         };
 
         fetchItemDetails();
-    }, [user, id, lat, lon]);
+    }, [pincode, id, lat, lon]);
 
     if (loading) {
         return (
@@ -248,8 +256,9 @@ const ItemDetails = () => {
 
                                     <div className="flex items-center gap-2">
                                         <MapPin className="h-4 w-4 flex-shrink-0"/>
-                                        <span
-                                            className="break-words">Delivery distance: {item.metadata.distance} KM</span>
+                                        <span className="break-words">
+                                          Delivery distance: {item.metadata?.distance != null ? `${item.metadata.distance} KM` : "NA"}
+                                        </span>
                                     </div>
 
 

@@ -122,7 +122,8 @@ const Dashboard = () => {
                     is_available: item.is_available ? "active" : "unavailable",
                     price_change: item.price_change,
                     max_price: item.max_price,
-                    max_offer: item.max_offer
+                    max_offer: item.max_offer,
+                    pincode: item.pincode
                 }));
 
                 setRecentAlerts(alerts); // Set alert cards
@@ -263,7 +264,7 @@ const Dashboard = () => {
                                                                 {/* Left Side: Name + Badge */}
                                                                 <div className="flex items-center gap-2 min-w-0">
                                                                     <Link
-                                                                        to={`/item/${alert.item_id}`}
+                                                                        to={`/item/${alert.item_id}?pincode=${alert.pincode}`}
                                                                         className="font-medium hover:text-primary transition-colors text-sm sm:text-base line-clamp-2 block truncate max-w-[200px] flex-1"
                                                                         title={alert.name}
                                                                     >
