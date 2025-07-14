@@ -6,6 +6,16 @@ import {signInWithGoogle} from '@/services/authService';
 import {ArrowRight, BarChart3, Bell, Shield, Target, TrendingUp, Zap} from 'lucide-react';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
+const getPublicIP = async () => {
+  try {
+    const response = await fetch("https://api.ipify.org?format=json");
+    const data = await response.json();
+    return data.ip; // e.g., "123.123.123.123"
+  } catch (err) {
+    console.error("Failed to get IP:", err);
+    return null;
+  }
+};
 
 const LandingPage = ({pincode}) => {
     const [isSigningIn, setIsSigningIn] = useState(false);
@@ -13,15 +23,18 @@ const LandingPage = ({pincode}) => {
     const handleGoogleSignIn = async () => {
         setIsSigningIn(true);
         try {
+            const ip = await getPublicIP();
+
             const user = await signInWithGoogle(); // Assuming signInWithGoogle returns a UserCredential
 
-
+            console.log(ip)
             // Prepare data for the backend call
             const userData = {
                 uid: user.uid,
                 email: user.email,
                 username: user.displayName,
-                pincode: pincode
+                pincode: pincode,
+                ip:ip
                 // You might want to add other relevant user data here
             };
 

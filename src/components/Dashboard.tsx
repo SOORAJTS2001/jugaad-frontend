@@ -7,7 +7,6 @@ import {signOut} from '@/services/authService';
 import {useAuth} from '@/hooks/useAuth';
 import {Link} from 'react-router-dom';
 import AlertForm from './AlertForm';
-import {MiniPriceChart} from "@/utils/MiniPriceChart.tsx";
 import {
     Activity,
     AlertCircle,
@@ -15,6 +14,7 @@ import {
     CheckCircle2,
     ExternalLink,
     LogOut,
+    MapPin,
     Menu,
     MoreHorizontal,
     Settings,
@@ -24,6 +24,8 @@ import React, {useEffect, useState} from 'react';
 import {useToast} from '@/hooks/use-toast';
 
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
+import {PincodeForm} from "@/utils/pincodeFrom.tsx";
+import {WishlistSection} from "@/utils/DashboardShare.tsx";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -54,7 +56,7 @@ export function ItemActionsDropdown({userId, itemId, emailId,}: Props) {
             });
             await new Promise((resolve) => setTimeout(resolve, 1000));
             window.location.reload();
-        } catch (err: any) {
+        } catch (err) {
             toast({
                 title: "Error",
                 description: "Could not delete the item",
@@ -90,7 +92,8 @@ export function ItemActionsDropdown({userId, itemId, emailId,}: Props) {
 const Dashboard = () => {
     const {user} = useAuth();
     const [recentAlerts, setRecentAlerts] = useState([]);
-    const [priceHistories, setPriceHistories] = useState({});
+    const [userPincode, setUserPincode] = useState([]);
+    const [UserItems, setUserItems] = useState([]);
 
 
     useEffect(() => {
@@ -110,7 +113,10 @@ const Dashboard = () => {
             body: JSON.stringify(data),
         })
             .then((response) => response.json())
-            .then((items) => {
+            .then((response) => {
+                setUserPincode(response.user.pincode)
+                const items = response.items
+                setUserItems(items)
                 const alerts = items.map((item, index) => ({
                     id: index + 1,
                     name: item.name,
@@ -127,20 +133,6 @@ const Dashboard = () => {
                 }));
 
                 setRecentAlerts(alerts); // Set alert cards
-
-                // Build priceHistories object
-                const priceHistoriesObj = {};
-                items.forEach(item => {
-                    priceHistoriesObj[item.item_id] = item.logs
-                        .slice() // Make a shallow copy to avoid mutating the original
-                        .reverse() // Reverse the order
-                        .map(log => ({
-                            price: log.selling_price,
-                            timestamp: log.last_updated_timestamp
-                        }));
-                });
-
-                setPriceHistories(priceHistoriesObj); // Set all histories at once
             })
             .catch((error) => {
                 console.error("Error fetching items:", error);
@@ -176,9 +168,12 @@ const Dashboard = () => {
                         </div>
 
                         <div className="flex items-center space-x-1 sm:space-x-4">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
-                                <Bell className="h-4 w-4 sm:h-5 sm:w-5"/>
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 flex-shrink-0"/>
+                                <span className="text-sm mx-2 font-semibold">
+                                          {userPincode}
+                                        </span>
+                            </div>
                             <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8 sm:h-10 sm:w-10">
                                 <Settings className="h-4 w-4 sm:h-5 sm:w-5"/>
                             </Button>
@@ -280,15 +275,6 @@ const Dashboard = () => {
                                                                         {alert.is_available}
                                                                     </Badge>
                                                                 </div>
-
-                                                                {/* Right Side: Mini Chart */}
-                                                                <div className="flex-shrink-0">
-                                                                    <MiniPriceChart
-                                                                        data={priceHistories[alert.item_id] || []}
-                                                                        width={80}
-                                                                        height={32}
-                                                                    />
-                                                                </div>
                                                             </div>
 
                                                             <p className="text-xs sm:text-sm text-muted-foreground truncate">
@@ -380,10 +366,17 @@ const Dashboard = () => {
                                 <div className="hidden sm:block">
                                     <AlertForm/>
                                 </div>
-                                <Button variant="outline" className="w-full justify-start gap-2 h-9 text-sm">
-                                    <Activity className="h-4 w-4"/>
-                                    Price Prediction
-                                </Button>
+                                {UserItems && UserItems.length > 0 && (
+                                    <WishlistSection UserItems={UserItems} />
+                                )}
+                                {user && (
+                                    <PincodeForm
+                                        user_uid={user.uid}
+                                        email={user.email}
+                                        endpoint={`${backendUrl}/change-pincode`}
+                                    />
+                                )}
+
                             </CardContent>
                         </Card>
 
