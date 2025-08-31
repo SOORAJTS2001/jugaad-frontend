@@ -238,6 +238,7 @@ const ItemDetails = () => {
                                         </Badge>
                                     )}
 
+
                                     <Badge
                                         variant={item.availability === 'in-stock' ? 'default' : 'destructive'}
                                     >
