@@ -66,8 +66,8 @@ const Chat = () => {
         return () => clearInterval(interval);
     }, []);
     useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-}, [messages]);
+        messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
+    }, [messages]);
 
     const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([
         {
@@ -96,86 +96,93 @@ const Chat = () => {
         }
     ]);
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
+const handleSend = async () => {
+    if (!input.trim()) return;
 
-        if (!hasStartedChat) {
-            setHasStartedChat(true);
-        }
+    if (!hasStartedChat) {
+        setHasStartedChat(true);
+    }
 
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            type: 'user',
-            content: input,
-            timestamp: new Date(),
-        };
-
-        setMessages(prev => [...prev, userMessage]);
-        setInput('');
-        setIsLoading(true);
-        setIsLoadingProducts(true);
-
-        // Simulate streaming response
-        const streamingMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            type: 'bot',
-            content: '',
-            timestamp: new Date(),
-            isStreaming: true,
-        };
-
-        setMessages(prev => [...prev, streamingMessage]);
-
-        // Simulate streaming text
-        setTimeout(() => {
-            const botMessage: Message = {
-                id: streamingMessage.id,
-                type: 'bot',
-                content: 'Here\'s a delicious recipe I found for you! This spicy tomato rice is perfect for a quick and flavorful meal.',
-                timestamp: new Date(),
-                isStreaming: false,
-                recipe: {
-                    title: 'Spicy Tomato Rice',
-                    description: 'A flavorful one-pot meal with aromatic spices and fresh tomatoes',
-                    cookTime: '30 mins',
-                    servings: 4,
-                    items: [
-                        {
-                            id: '1',
-                            name: 'Basmati Rice',
-                            quantity: '2 cups',
-                            image: 'https://fitmencook.com/wp-content/uploads/2024/03/How-to-Cook-Basmati-Rice.jpg',
-                            price: 64
-                        },
-                        {
-                            id: '2',
-                            name: 'Fresh Tomatoes',
-                            quantity: '4 large',
-                            image: 'https://cdnasd.countrydelight.in/cdproductimg/new-website/TomatoDesi-pdp.jpg_1723791939200.jpg',
-                            price: 18
-                        },
-                        {
-                            id: '3',
-                            name: 'Olive Oil',
-                            quantity: '2 tbsp',
-                            image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=80&h=80&fit=crop',
-                            price: 11
-                        }
-                    ]
-                }
-            };
-
-            setMessages(prev => prev.map(msg =>
-                msg.id === streamingMessage.id ? botMessage : msg
-            ));
-            setIsLoading(false);
-
-            // Load products after message completes
-            setTimeout(() => {
-                setIsLoadingProducts(false);
-            }, 2000);
-        }, 1500);
+    const userMessage: Message = {
+        id: Date.now().toString(),
+        type: 'user',
+        content: input,
+        timestamp: new Date(),
     };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+    setIsLoadingProducts(true);
+
+    // Create a placeholder bot message
+    const botMsgId = (Date.now() + 1).toString();
+    const placeholderBot: Message = {
+        id: botMsgId,
+        type: 'bot',
+        content: '',
+        timestamp: new Date(),
+        isStreaming: true,
+    };
+
+    setMessages(prev => [...prev, placeholderBot]);
+
+    const evtSource = new EventSource(`http://localhost:8000/chat/stream-plan?query=${input}`);
+
+    // Stream recipe text into the same message
+    evtSource.addEventListener("recipe_step", (e) => {
+        setMessages(prev =>
+            prev.map(msg =>
+                msg.id === botMsgId
+                    ? { ...msg, content: msg.content + e.data + " " }
+                    : msg
+            )
+        );
+    });
+
+    // When product suggestions arrive, add recipe card below the same bot message
+    evtSource.addEventListener("product_suggestions", (e) => {
+        const products = JSON.parse(e.data);
+        console.log(products)
+        setMessages(prev =>
+            prev.map(msg =>
+                msg.id === botMsgId
+                    ? {
+                        ...msg,
+                        isStreaming: false,
+                        recipe: {
+                            title: "Suggested Ingredients",
+                            description: "Products you can buy for this recipe",
+                            cookTime: "",
+                            servings: 0,
+                            items: products.map((p: any, idx: number) => ({
+                                id: `${idx}`,
+                                name: p.name,
+                                quantity: p.quantity || "",
+                                image: "https://www.jiomart.com/images/product/original/"+p.image_url || "",
+                                price: p.price,
+                            })),
+                        },
+                    }
+                    : msg
+            )
+        );
+    });
+
+    evtSource.addEventListener("end", () => {
+        console.log("Stream finished. Closing connection.");
+        evtSource.close();
+        setIsLoading(false);
+        setIsLoadingProducts(false);
+
+        // Mark message as finished
+        setMessages(prev =>
+            prev.map(msg =>
+                msg.id === botMsgId ? { ...msg, isStreaming: false } : msg
+            )
+        );
+    });
+};
 
     const RecipeCard = ({recipe}: { recipe: RecipeData }) => (
         <Card className="mt-4 border-border/50 bg-card/50 backdrop-blur-sm">
@@ -218,7 +225,11 @@ const Chat = () => {
                                         />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-foreground truncate">{item.name}</p>
+                                        <p className="font-medium text-foreground-15">
+                                            {item.name
+                                                .toLowerCase()
+                                                .replace(/\b\w/g, (char) => char.toUpperCase())}
+                                        </p>
                                         <p className="text-sm text-muted-foreground">{item.quantity}</p>
                                     </div>
                                     <div className="text-right">
@@ -442,8 +453,13 @@ const Chat = () => {
                                                 </div>
                                             ) : (
                                                 <div className="text-sm leading-relaxed">
-                                                    <StreamingText text={message.content}/>
+                                                    {message.type === "bot" ? (
+                                                        <StreamingText text={message.content}/>
+                                                    ) : (
+                                                        <div>{message.content}</div>
+                                                    )}
                                                 </div>
+
                                             )}
                                         </div>
                                         {message.recipe && !message.isStreaming &&
