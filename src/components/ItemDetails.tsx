@@ -231,10 +231,12 @@ const ItemDetails = () => {
                                 <ItemImage src={item.image} alt={item.name}/>
                                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                                     <Badge variant="secondary">{item.site}</Badge>
-                                    <Badge variant="secondary">
-                                        <Star className="h-4 w-4 flex-shrink-0 text-black mr-1"/>
-                                        {item.metadata.rating}
-                                    </Badge>
+                                    {item.metadata?.rating && (
+                                        <Badge variant="secondary">
+                                            <Star className="h-4 w-4 flex-shrink-0 text-black mr-1"/>
+                                            {item.metadata.rating}
+                                        </Badge>
+                                    )}
 
                                     <Badge
                                         variant={item.availability === 'in-stock' ? 'default' : 'destructive'}
