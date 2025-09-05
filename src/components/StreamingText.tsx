@@ -1,34 +1,9 @@
-import { useState, useEffect } from 'react';
-
-interface StreamingTextProps {
-  text: string;
-  speed?: number;
-  onComplete?: () => void;
+interface HtmlTextProps {
+  text: string; // may contain HTML
 }
 
-export const StreamingText = ({ text, speed = 50, onComplete }: StreamingTextProps) => {
-  const [displayedText, setDisplayedText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    if (currentIndex < text.length) {
-      const timer = setTimeout(() => {
-        setDisplayedText(prev => prev + text[currentIndex]);
-        setCurrentIndex(prev => prev + 1);
-      }, speed);
-
-      return () => clearTimeout(timer);
-    } else if (onComplete) {
-      onComplete();
-    }
-  }, [currentIndex, text, speed, onComplete]);
-
+export const HtmlText = ({ text }: HtmlTextProps) => {
   return (
-    <span>
-      {displayedText}
-      {currentIndex < text.length && (
-        <span className="animate-pulse">|</span>
-      )}
-    </span>
+    <span dangerouslySetInnerHTML={{ __html: text }} />
   );
 };

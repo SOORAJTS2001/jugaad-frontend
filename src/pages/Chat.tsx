@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
@@ -7,9 +7,11 @@ import {ScrollArea} from '@/components/ui/scroll-area';
 import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {Sheet, SheetContent, SheetTrigger} from '@/components/ui/sheet';
 import {Bot, ChefHat, Clock, Menu, Plus, Search, Send, ShoppingCart, Sparkles, User, Users} from 'lucide-react';
-import {StreamingText} from '@/components/StreamingText';
+import {HtmlText} from '@/components/StreamingText';
 import {MessageSkeleton, ProductSkeleton} from '@/components/LoadingSkeleton';
 import {NeonBorder} from "@/components/NeonBorder.tsx";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 interface Message {
     id: string;
@@ -69,120 +71,88 @@ const Chat = () => {
         messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
     }, [messages]);
 
-    const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([
-        {
-            id: '1',
-            name: 'Fresh Tomatoes (1kg)',
-            price: 45,
-            image: 'https://cdnasd.countrydelight.in/cdproductimg/new-website/TomatoDesi-pdp.jpg_1723791939200.jpg',
-            category: 'Vegetables',
-            inStock: true
-        },
-        {
-            id: '2',
-            name: 'Basmati Rice (5kg)',
-            price: 320,
-            image: 'https://fitmencook.com/wp-content/uploads/2024/03/How-to-Cook-Basmati-Rice.jpg',
-            category: 'Grains',
-            inStock: true
-        },
-        {
-            id: '3',
-            name: 'Olive Oil (500ml)',
-            price: 280,
-            image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=100&h=100&fit=crop',
-            category: 'Cooking Oil',
-            inStock: false
+    const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
+    const handleSend = async () => {
+        if (!input.trim()) return;
+
+        if (!hasStartedChat) {
+            setHasStartedChat(true);
         }
-    ]);
 
-const handleSend = async () => {
-    if (!input.trim()) return;
+        const userMessage: Message = {
+            id: Date.now().toString(),
+            type: 'user',
+            content: input,
+            timestamp: new Date(),
+        };
 
-    if (!hasStartedChat) {
-        setHasStartedChat(true);
-    }
+        setMessages(prev => [...prev, userMessage]);
+        setInput('');
+        setIsLoading(true);
+        setIsLoadingProducts(true);
 
-    const userMessage: Message = {
-        id: Date.now().toString(),
-        type: 'user',
-        content: input,
-        timestamp: new Date(),
-    };
+        // Create a placeholder bot message
+        const botMsgId = (Date.now() + 1).toString();
+        const placeholderBot: Message = {
+            id: botMsgId,
+            type: 'bot',
+            content: '',
+            timestamp: new Date(),
+            isStreaming: true,
+        };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-    setIsLoadingProducts(true);
+        setMessages(prev => [...prev, placeholderBot]);
 
-    // Create a placeholder bot message
-    const botMsgId = (Date.now() + 1).toString();
-    const placeholderBot: Message = {
-        id: botMsgId,
-        type: 'bot',
-        content: '',
-        timestamp: new Date(),
-        isStreaming: true,
-    };
+        const response = await fetch(`${backendUrl}/chat/stream-plan?query=${input}`);
+        const data = await response.json();
+        // Manually assign variables to match Product type
+        const mappedProducts: Product[] = data.items.map((item: any, idx: number) => ({
+            id: item.id ?? `${idx}`, // fallback if no id
+            name: item.name, // backend field → your Product.name
+            mrp: item.price,     // backend field → your Product.mrp
+            price: item.price, // backend field → your Product.price
+            image: "https://www.jiomart.com/images/product/original/" + item.image_url,
+            inStock: item.is_available
+        }));
 
-    setMessages(prev => [...prev, placeholderBot]);
-
-    const evtSource = new EventSource(`http://localhost:8000/chat/stream-plan?query=${input}`);
-
-    // Stream recipe text into the same message
-    evtSource.addEventListener("recipe_step", (e) => {
-        setMessages(prev =>
-            prev.map(msg =>
-                msg.id === botMsgId
-                    ? { ...msg, content: msg.content + e.data + " " }
-                    : msg
-            )
-        );
-    });
-
-    // When product suggestions arrive, add recipe card below the same bot message
-    evtSource.addEventListener("product_suggestions", (e) => {
-        const products = JSON.parse(e.data);
-        console.log(products)
+        setRecommendedProducts(mappedProducts);
         setMessages(prev =>
             prev.map(msg =>
                 msg.id === botMsgId
                     ? {
                         ...msg,
                         isStreaming: false,
+                        content: data.content,
                         recipe: {
-                            title: "Suggested Ingredients",
-                            description: "Products you can buy for this recipe",
-                            cookTime: "",
-                            servings: 0,
-                            items: products.map((p: any, idx: number) => ({
+                            title: data.title,
+                            description: "Products you can buy",
+                            cookTime: data.cooking_time,
+                            servings: data.serving_size,
+                            items: data.items.map((p: any, idx: number) => ({
                                 id: `${idx}`,
+                                query: p.query,
                                 name: p.name,
+                                category: p.category,
                                 quantity: p.quantity || "",
-                                image: "https://www.jiomart.com/images/product/original/"+p.image_url || "",
+                                image: p.image_url
+                                    ? "https://www.jiomart.com/images/product/original/" + p.image_url
+                                    : "",
                                 price: p.price,
+                                mrp: p.mrp,
+                                source_url: "https://www.jiomart.com/" + p.source_url
+
                             })),
                         },
                     }
                     : msg
             )
         );
-    });
 
-    evtSource.addEventListener("end", () => {
-        console.log("Stream finished. Closing connection.");
-        evtSource.close();
         setIsLoading(false);
         setIsLoadingProducts(false);
 
-        // Mark message as finished
-        setMessages(prev =>
-            prev.map(msg =>
-                msg.id === botMsgId ? { ...msg, isStreaming: false } : msg
-            )
-        );
-    });
-};
+    };
 
     const RecipeCard = ({recipe}: { recipe: RecipeData }) => (
         <Card className="mt-4 border-border/50 bg-card/50 backdrop-blur-sm">
@@ -198,20 +168,24 @@ const handleSend = async () => {
 
             <CardContent>
                 <div className="flex gap-6 mb-6">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4"/>
-                        <span>{recipe.cookTime}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Users className="h-4 w-4"/>
-                        <span>{recipe.servings} servings</span>
-                    </div>
+                    {recipe.cookTime &&
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4"/>
+                            <span>{recipe.cookTime}</span>
+                        </div>
+                    }
+                    {recipe.servings &&
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Users className="h-4 w-4"/>
+                            <span>{recipe.servings} servings</span>
+                        </div>
+                    }
                 </div>
 
                 <div className="space-y-3">
                     <h4 className="font-semibold text-foreground flex items-center gap-2">
                         <Sparkles className="h-4 w-4"/>
-                        Ingredients needed
+                        Suggested items
                     </h4>
                     <div className="grid gap-3">
                         {recipe.items.map((item) => (
@@ -230,14 +204,25 @@ const handleSend = async () => {
                                                 .toLowerCase()
                                                 .replace(/\b\w/g, (char) => char.toUpperCase())}
                                         </p>
-                                        <p className="text-sm text-muted-foreground">{item.quantity}</p>
+                                        <p className="text-sm text-muted-foreground">{item.category} | {item.quantity}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="font-semibold text-emerald-600 dark:text-emerald-400">₹{item.price}</p>
-                                        <Button size="sm" variant="outline" className="mt-1 h-7 text-xs">
-                                            <Plus className="h-3 w-3 mr-1"/>
-                                            Add
+                                        <Button
+                                            asChild
+                                            size="sm"
+                                            variant="outline"
+                                            className="mt-1 h-7 text-xs bg-black text-white hover:bg-gray-900"
+                                        >
+                                            <a
+                                                href={item.source_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                View on Jiomart
+                                            </a>
                                         </Button>
+
                                     </div>
                                 </div>
                             </Card>
@@ -290,7 +275,7 @@ const handleSend = async () => {
                                         variant={product.inStock ? "default" : "secondary"}
                                     >
                                         <Plus className="h-3 w-3 mr-1"/>
-                                        Add to Cart
+                                        Add Alert
                                     </Button>
                                 </div>
                             </div>
@@ -454,7 +439,7 @@ const handleSend = async () => {
                                             ) : (
                                                 <div className="text-sm leading-relaxed">
                                                     {message.type === "bot" ? (
-                                                        <StreamingText text={message.content}/>
+                                                        <HtmlText text={message.content}/>
                                                     ) : (
                                                         <div>{message.content}</div>
                                                     )}
