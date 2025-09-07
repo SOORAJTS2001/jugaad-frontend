@@ -4,9 +4,8 @@ import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
 import {ScrollArea} from '@/components/ui/scroll-area';
-import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {Sheet, SheetContent, SheetTrigger} from '@/components/ui/sheet';
-import {Bot, ChefHat, Clock, Menu, Plus, Search, Send, ShoppingCart, Sparkles, User, Users} from 'lucide-react';
+import {ChefHat, Clock, Menu, Search, Send, ShoppingCart, Sparkles, Users} from 'lucide-react';
 import {HtmlText} from '@/components/StreamingText';
 import {MessageSkeleton, ProductSkeleton} from '@/components/LoadingSkeleton';
 import {NeonBorder} from "@/components/NeonBorder.tsx";
@@ -45,6 +44,15 @@ interface Product {
     inStock: boolean;
 }
 
+interface FoodNutrition {
+    energy: string;
+    protein: string;
+    carbohydrate: string;
+    fiber: string;
+    fat: string;
+    cholesterol: string;
+}
+
 const Chat = () => {
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -67,12 +75,17 @@ const Chat = () => {
         }, 3000);
         return () => clearInterval(interval);
     }, []);
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
-    }, [messages]);
+    const RDA = {
+        energy: 2000,       // kcal
+        protein: 50,        // g
+        carbohydrate: 275,  // g
+        fat: 70,            // g
+        fiber: 30,          // g
+        cholesterol: 300,   // mg
+    };
 
     const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
-
+    const [foodNutrition, setFoodNutrition] = useState<FoodNutrition>(null)
     const handleSend = async () => {
         if (!input.trim()) return;
 
@@ -115,8 +128,11 @@ const Chat = () => {
             image: "https://www.jiomart.com/images/product/original/" + item.image_url,
             inStock: item.is_available
         }));
+        const foodNutrition = data.total_nutrition
 
         setRecommendedProducts(mappedProducts);
+        setFoodNutrition(foodNutrition);
+        console.log(foodNutrition)
         setMessages(prev =>
             prev.map(msg =>
                 msg.id === botMsgId
@@ -155,7 +171,7 @@ const Chat = () => {
     };
 
     const RecipeCard = ({recipe}: { recipe: RecipeData }) => (
-        <Card className="mt-4 border-border/50 bg-card/50 backdrop-blur-sm">
+        <Card className="mt-4 border border-black border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                     <div className="p-2 bg-primary/10 rounded-lg">
@@ -182,14 +198,14 @@ const Chat = () => {
                     }
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                     <h4 className="font-semibold text-foreground flex items-center gap-2">
                         <Sparkles className="h-4 w-4"/>
                         Suggested items
                     </h4>
                     <div className="grid gap-3">
                         {recipe.items.map((item) => (
-                            <Card key={item.id} className="p-3 bg-muted/30 border-border/50">
+                            <Card key={item.id} className="p-1 bg-muted/30 border-border/50">
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <img
@@ -199,7 +215,7 @@ const Chat = () => {
                                         />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-foreground-15">
+                                        <p className="font-medium text-foreground-15 truncate max-w-[80px] sm:max-w-[150px] md:max-w-[200px] text-xs sm:text-sm md:text-base">
                                             {item.name
                                                 .toLowerCase()
                                                 .replace(/\b\w/g, (char) => char.toUpperCase())}
@@ -207,7 +223,10 @@ const Chat = () => {
                                         <p className="text-sm text-muted-foreground">{item.category} | {item.quantity}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-semibold text-emerald-600 dark:text-emerald-400">₹{item.price}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm text-gray-500 line-through">₹{item.mrp}</p>
+                                            <p className="font-semibold text-emerald-600 dark:text-emerald-400">₹{item.price}</p>
+                                        </div>
                                         <Button
                                             asChild
                                             size="sm"
@@ -237,52 +256,41 @@ const Chat = () => {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2">
-                    <ShoppingCart className="h-4 w-4"/>
-                    Recommendations
+                    Additional Information
                 </h3>
-                <Badge variant="secondary" className="text-xs">JioMart</Badge>
             </div>
 
             {isLoadingProducts ? (
                 <ProductSkeleton/>
-            ) : (
-                <div className="space-y-3">
-                    {recommendedProducts.map((product) => (
-                        <Card key={product.id} className="p-3 hover:shadow-md transition-all hover:scale-[1.02]">
-                            <div className="flex gap-3">
-                                <img
-                                    src={product.image}
-                                    alt={product.name}
-                                    className="w-14 h-14 rounded-lg object-cover"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-sm line-clamp-2 text-foreground">{product.name}</h4>
-                                    <p className="text-xs text-muted-foreground mt-1">{product.category}</p>
-                                    <div className="flex items-center justify-between mt-2">
-                                        <span
-                                            className="font-semibold text-emerald-600 dark:text-emerald-400">₹{product.price}</span>
-                                        <Badge
-                                            variant={product.inStock ? "default" : "secondary"}
-                                            className="text-xs"
-                                        >
-                                            {product.inStock ? "In Stock" : "Out of Stock"}
-                                        </Badge>
-                                    </div>
-                                    <Button
-                                        size="sm"
-                                        className="w-full mt-2 h-7"
-                                        disabled={!product.inStock}
-                                        variant={product.inStock ? "default" : "secondary"}
-                                    >
-                                        <Plus className="h-3 w-3 mr-1"/>
-                                        Add Alert
-                                    </Button>
-                                </div>
-                            </div>
-                        </Card>
-                    ))}
+            ) : <Card className="p-4 mt-4 border border-border/50 bg-card/50 backdrop-blur-sm">
+                <h3 className="font-semibold text-lg mb-3">Total Nutrition</h3>
+                <div className="space-y-2 text-sm">
+                    {[
+                        {label: "Energy", key: "energy", unit: "kcal"},
+                        {label: "Protein", key: "protein", unit: "g"},
+                        {label: "Carbs", key: "carbohydrate", unit: "g"},
+                        {label: "Fat", key: "fat", unit: "g"},
+                        {label: "Fiber", key: "fiber", unit: "g"},
+                        {label: "Cholesterol", key: "cholesterol", unit: "mg"},
+                    ].map((nutrient) => {
+                        const value = foodNutrition[nutrient.key as keyof typeof foodNutrition] || 0;
+                        const exceeds = value > (RDA[nutrient.key as keyof typeof RDA] || Infinity);
+                        return (
+                            <p
+                                key={nutrient.key}
+                                className={`flex justify-between items-center p-2 rounded-md ${
+                                    exceeds ? "bg-red-100 text-red-700 font-semibold" : "bg-muted/20 text-foreground"
+                                }`}
+                            >
+                                <span>{nutrient.label}</span>
+                                <span>
+            {value} {nutrient.unit}
+          </span>
+                            </p>
+                        );
+                    })}
                 </div>
-            )}
+            </Card>}
         </div>
     );
 
@@ -407,14 +415,6 @@ const Chat = () => {
                                     key={message.id}
                                     className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : ''}`}
                                 >
-                                    {message.type === 'bot' && (
-                                        <Avatar
-                                            className="h-8 w-8 bg-gradient-to-r from-primary to-neon-primary shrink-0">
-                                            <AvatarFallback className="bg-black">
-                                                <Bot className="h-4 w-4 text-primary-foreground"/>
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    )}
 
                                     <div
                                         className={`max-w-[85%] sm:max-w-[70%] ${message.type === 'user' ? 'order-1' : ''}`}>
@@ -437,11 +437,11 @@ const Chat = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="text-sm leading-relaxed">
+                                                <div className="text-sm leading-relaxed max-w-full break-words">
                                                     {message.type === "bot" ? (
                                                         <HtmlText text={message.content}/>
                                                     ) : (
-                                                        <div>{message.content}</div>
+                                                        <div className="max-w-full break-words">{message.content}</div>
                                                     )}
                                                 </div>
 
@@ -451,13 +451,7 @@ const Chat = () => {
                                             <RecipeCard recipe={message.recipe}/>}
                                     </div>
 
-                                    {message.type === 'user' && (
-                                        <Avatar className="h-8 w-8 bg-muted shrink-0">
-                                            <AvatarFallback>
-                                                <User className="h-4 w-4"/>
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    )}
+
                                 </div>
                             ))}
 
@@ -497,12 +491,7 @@ const Chat = () => {
                 {/* Right Sidebar - Product Recommendations */}
                 <div className="w-80 border-l bg-card/30 backdrop-blur-sm hidden lg:flex flex-col">
                     <div className="p-4 border-b border-border/50">
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="p-1.5 bg-primary/10 rounded-lg">
-                                <ShoppingCart className="h-4 w-4 text-primary"/>
-                            </div>
-                            <h2 className="font-semibold">Smart Recommendations</h2>
-                        </div>
+
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
                             <Input
