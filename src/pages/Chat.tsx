@@ -2,7 +2,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
-import {Badge} from '@/components/ui/badge';
 import {ScrollArea} from '@/components/ui/scroll-area';
 import {Sheet, SheetContent, SheetTrigger} from '@/components/ui/sheet';
 import {ChefHat, Clock, Menu, Search, Send, ShoppingCart, Sparkles, Users} from 'lucide-react';
@@ -40,8 +39,13 @@ interface Product {
     name: string;
     price: number;
     image: string;
-    category: string;
+    mrp: string;
     inStock: boolean;
+}
+
+interface ProductByCategory {
+    category: string;
+    products: Product[]
 }
 
 interface FoodNutrition {
@@ -84,7 +88,7 @@ const Chat = () => {
         cholesterol: 300,   // mg
     };
 
-    const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+    const [recommendedProducts, setRecommendedProducts] = useState<ProductByCategory[]>([]);
     const [foodNutrition, setFoodNutrition] = useState<FoodNutrition>(null)
     const handleSend = async () => {
         if (!input.trim()) return;
@@ -120,19 +124,25 @@ const Chat = () => {
         const response = await fetch(`${backendUrl}/chat/stream-plan?query=${input}`);
         const data = await response.json();
         // Manually assign variables to match Product type
-        const mappedProducts: Product[] = data.items.map((item: any, idx: number) => ({
-            id: item.id ?? `${idx}`, // fallback if no id
-            name: item.name, // backend field → your Product.name
-            mrp: item.price,     // backend field → your Product.mrp
-            price: item.price, // backend field → your Product.price
-            image: "https://www.jiomart.com/images/product/original/" + item.image_url,
-            inStock: item.is_available
-        }));
+        const similarProducts: ProductByCategory[] = data.items.map(
+            (item: any, idx: number): ProductByCategory => ({
+                category: item.query, // group name
+                products: item.similar_items.map(
+                    (sim: any, simIdx: number): Product => ({
+                        id: sim.id ?? `${idx}-${simIdx}`,
+                        name: sim.name,
+                        price: sim.price,
+                        mrp: sim.mrp,
+                        image: sim.image_url,
+                        inStock: sim.is_available ?? false,
+                    })
+                ),
+            })
+        );
         const foodNutrition = data.total_nutrition
 
-        setRecommendedProducts(mappedProducts);
+        setRecommendedProducts(similarProducts);
         setFoodNutrition(foodNutrition);
-        console.log(foodNutrition)
         setMessages(prev =>
             prev.map(msg =>
                 msg.id === botMsgId
@@ -151,12 +161,10 @@ const Chat = () => {
                                 name: p.name,
                                 category: p.category,
                                 quantity: p.quantity || "",
-                                image: p.image_url
-                                    ? "https://www.jiomart.com/images/product/original/" + p.image_url
-                                    : "",
+                                image: p.image_url || "",
                                 price: p.price,
                                 mrp: p.mrp,
-                                source_url: "https://www.jiomart.com/" + p.source_url
+                                source_url: p.source_url
 
                             })),
                         },
@@ -262,35 +270,84 @@ const Chat = () => {
 
             {isLoadingProducts ? (
                 <ProductSkeleton/>
-            ) : <Card className="p-4 mt-4 border border-border/50 bg-card/50 backdrop-blur-sm">
-                <h3 className="font-semibold text-lg mb-3">Total Nutrition</h3>
-                <div className="space-y-2 text-sm">
-                    {[
-                        {label: "Energy", key: "energy", unit: "kcal"},
-                        {label: "Protein", key: "protein", unit: "g"},
-                        {label: "Carbs", key: "carbohydrate", unit: "g"},
-                        {label: "Fat", key: "fat", unit: "g"},
-                        {label: "Fiber", key: "fiber", unit: "g"},
-                        {label: "Cholesterol", key: "cholesterol", unit: "mg"},
-                    ].map((nutrient) => {
-                        const value = foodNutrition[nutrient.key as keyof typeof foodNutrition] || 0;
-                        const exceeds = value > (RDA[nutrient.key as keyof typeof RDA] || Infinity);
-                        return (
-                            <p
-                                key={nutrient.key}
-                                className={`flex justify-between items-center p-2 rounded-md ${
-                                    exceeds ? "bg-red-100 text-red-700 font-semibold" : "bg-muted/20 text-foreground"
-                                }`}
-                            >
-                                <span>{nutrient.label}</span>
-                                <span>
-            {value} {nutrient.unit}
-          </span>
-                            </p>
-                        );
-                    })}
-                </div>
-            </Card>}
+            ) : (
+                <>
+                    {/* Nutrition Card */}
+                    <Card className="p-4 mt-4 border border-border/50 bg-card/50 backdrop-blur-sm">
+                        <h3 className="font-semibold text-lg mb-3">Total Nutrition</h3>
+                        <div className="space-y-2 text-sm">
+                            {[
+                                {label: "Energy", key: "energy", unit: "kcal"},
+                                {label: "Protein", key: "protein", unit: "g"},
+                                {label: "Carbs", key: "carbohydrate", unit: "g"},
+                                {label: "Fat", key: "fat", unit: "g"},
+                                {label: "Fiber", key: "fiber", unit: "g"},
+                                {label: "Cholesterol", key: "cholesterol", unit: "mg"},
+                            ].map((nutrient) => {
+                                const value = foodNutrition[nutrient.key as keyof typeof foodNutrition] || 0;
+                                const exceeds = value > (RDA[nutrient.key as keyof typeof RDA] || Infinity);
+                                return (
+                                    <p
+                                        key={nutrient.key}
+                                        className={`flex justify-between items-center p-2 rounded-md ${
+                                            exceeds
+                                                ? "bg-red-100 text-red-700 font-semibold"
+                                                : "bg-muted/20 text-foreground"
+                                        }`}
+                                    >
+                                        <span>{nutrient.label}</span>
+                                        <span>
+                                        {value} {nutrient.unit}
+                                    </span>
+                                    </p>
+                                );
+                            })}
+                        </div>
+                    </Card>
+
+                    {/* Product Recommendations */}
+                    {recommendedProducts.length > 0 && (
+                        <div className="space-y-4">
+
+                            <h3 className="font-semibold text-lg">Similar Products</h3>
+                            <div
+                                className="max-h-96 overflow-y-auto pr-2">
+
+
+                                {recommendedProducts.map((group) => (
+                                    <div key={group.category}>
+                                        <h4 className="font-medium text-md mb-2">{group.category}</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                                            {group.products.map((product) => (
+                                                <Card
+                                                    key={product.id}
+                                                    className="p-1 border border-border/50 bg-card/50 backdrop-blur-sm"
+                                                >
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="w-full h-32 object-cover rounded-md mb-2"
+                                                    />
+                                                    <p className="font-medium truncate">{product.name}</p>
+                                                    <p className="text-sm text-muted-foreground">₹{product.price}</p>
+                                                    <p className="text-xs line-through text-gray-400">₹{product.mrp}</p>
+                                                    <p
+                                                        className={`text-xs font-medium mt-1 ${
+                                                            product.inStock ? "text-green-600" : "text-red-600"
+                                                        }`}
+                                                    >
+                                                        {product.inStock ? "In Stock" : "Out of Stock"}
+                                                    </p>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 
@@ -501,7 +558,7 @@ const Chat = () => {
                         </div>
                     </div>
 
-                    <ScrollArea className="flex-1 p-4">
+                    <ScrollArea className="flex-1 p-4 scrollable">
                         <ProductRecommendations/>
                     </ScrollArea>
                 </div>
