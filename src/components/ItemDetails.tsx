@@ -308,8 +308,6 @@ const ItemDetails = () => {
                                             {item.metadata.rating}
                                         </Badge>
                                     )}
-
-
                                     <Badge
                                         variant={item.availability === 'in-stock' ? 'default' : 'destructive'}
                                     >
