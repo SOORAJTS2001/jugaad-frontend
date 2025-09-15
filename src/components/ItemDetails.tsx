@@ -3,7 +3,18 @@ import {Link, useParams, useSearchParams} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Badge} from '@/components/ui/badge';
-import {ArrowLeft, Clock, ExternalLink, MapPin, Package, Star, TrendingDown, TrendingUp} from 'lucide-react';
+import {
+    ArrowLeft,
+    Clock,
+    ExternalLink,
+    Home,
+    MapPin,
+    Package,
+    Star,
+    TrendingDown,
+    TrendingUp,
+    User
+} from 'lucide-react';
 import AlertForm from './AlertForm';
 import {ScrollArea} from '@/components/ui/scroll-area';
 import {ChartContainer, ChartTooltip, ChartTooltipContent} from '@/components/ui/chart';
@@ -13,11 +24,49 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {getPincodeFromLocation} from "@/utils/location.tsx";
 import {useToast} from "@/hooks/use-toast.ts";
+import MapContainer from 'react-ola-maps-wrapper';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
+const olaMapsApiKey = import.meta.env.VITE_OLA_MAPS_API_KEY;
 
 function formatTimestamp(isoString) {
     return new Date(isoString).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata',});
+}
+
+const MarkerBox = ({label}: { label: string }) => (
+    <Card className="px-3 py-2 bg-black text-white rounded-lg shadow-md border-none">
+        <span className="font-semibold text-sm">{label}</span>
+    </Card>
+)
+
+
+function getZoomLevel(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    // Haversine formula
+    const R = 6371; // Earth radius in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // km
+
+    // Approx mapping distance → zoom
+    if (distance < 1) return 13;  // very close
+    if (distance < 5) return 12;
+    if (distance < 10) return 11;
+    if (distance < 25) return 10;
+    if (distance < 50) return 9;
+    if (distance < 100) return 8;
+    if (distance < 200) return 7;
+    if (distance < 400) return 6;
+    if (distance < 800) return 5;
+    if (distance < 1600) return 4;
+    return 3; // very far
 }
 
 function ItemImage({src, alt}) {
@@ -39,6 +88,8 @@ function ItemImage({src, alt}) {
 interface ItemData {
     id: string;
     name: string;
+    storeLat: number;
+    storeLng: number;
     currentPrice: number;
     originalPrice: number;
     discount: number;
@@ -85,30 +136,47 @@ const ItemDetails = () => {
 
         const fetchPincode = async () => {
             try {
+                // Try browser location first
                 const result = await getPincodeFromLocation();
+
                 if (result?.lat != null && result?.lon != null) {
                     setLat(result.lat);
                     setLng(result.lon);
-                } else {
-                    toast({
-                        title: "Location Required",
-                        description: "Please provide your location access to show more features!",
-                        variant: "destructive",
-                        duration: Infinity,
-                        className: "text-sm px-3 py-2",
-
-                    });
-                    console.warn("Location unavailable — skipping lat/lng set.");
+                    return; // ✅ Done
                 }
+
+                // ❌ No location → show toast & fallback
+                toast({
+                    title: "Location Required",
+                    description:
+                        "We could’t access your device location. Using approximate location from your IP instead.",
+                    variant: "destructive",
+                    duration: 8000,
+                    className: "text-sm px-3 py-2",
+                });
+
+                throw new Error("No location from getPincodeFromLocation");
             } catch (err) {
-                console.warn("Failed to get location:", err);
+                console.warn("Falling back to IP-based location:", err);
+
+                try {
+                    const response = await fetch("https://ipapi.co/json/");
+                    const data = await response.json();
+
+                    if (data?.latitude && data?.longitude) {
+                        setLat(data.latitude);
+                        setLng(data.longitude);
+                    } else {
+                        console.warn("IP-based location failed:", data);
+                    }
+                } catch (ipErr) {
+                    console.warn("IP fallback also failed:", ipErr);
+                }
             }
         };
 
-        fetchPincode();
-    }, []);
+        fetchPincode(); //we will get pincode here
 
-    useEffect(() => {
         const data = {
             pincode: pincode,
             item_id: id,
@@ -133,6 +201,8 @@ const ItemDetails = () => {
                 const Item: ItemData = {
                     id: id || '1',
                     name: result.name,
+                    storeLat: result.store_lat,
+                    storeLng: result.store_lng,
                     currentPrice: result.selling_price,
                     originalPrice: result.mrp_price,
                     discount: result.discount_percent,
@@ -145,8 +215,8 @@ const ItemDetails = () => {
                     availability: result.is_available ? 'in-stock' : 'out-of-stock',
                     metadata: result.item_metadata,
                 };
-
                 setItem(Item);
+
             } catch (error) {
                 console.error("Failed to fetch item details:", error);
             } finally {
@@ -155,7 +225,8 @@ const ItemDetails = () => {
         };
 
         fetchItemDetails();
-    }, [pincode, id, lat, lon]);
+    }, []);
+
 
     if (loading) {
         return (
@@ -231,13 +302,12 @@ const ItemDetails = () => {
                                 <ItemImage src={item.image} alt={item.name}/>
                                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                                     <Badge variant="secondary">{item.site}</Badge>
-                                    {item.metadata?.rating && (
+                                    {item?.metadata?.rating && (
                                         <Badge variant="secondary">
                                             <Star className="h-4 w-4 flex-shrink-0 text-black mr-1"/>
                                             {item.metadata.rating}
                                         </Badge>
                                     )}
-
                                     <Badge
                                         variant={item.availability === 'in-stock' ? 'default' : 'destructive'}
                                     >
@@ -410,7 +480,46 @@ const ItemDetails = () => {
                         </CardContent>
                     </Card>
                 </div>
+
+                <MapContainer
+                    className="mt-6 bg-black text-white rounded-lg shadow-md border-none"
+                    apiKey={olaMapsApiKey}
+                    width="100%"
+                    height="400px"
+                    center={{longitude: (lat + item.storeLat) / 2, latitude: (lon + item.storeLng) / 2}}
+                    markers={[
+                        {
+                            latitude: lon,
+                            longitude: lat,
+
+                            element: (
+                                <div
+                                    className="flex items-center justify-center w-10 h-10 rounded-full bg-black text-white shadow-md">
+                                    <User className="w-5 h-5"/>
+                                </div>
+                            ),
+                            popUp: (<Card className="p-3 shadow-md">
+                                Your location
+                            </Card>),
+                        },
+                        {
+                            latitude: item.storeLng,
+                            longitude: item.storeLat,
+                            element: (<div
+                                className="flex items-center justify-center w-10 h-10 rounded-full bg-black text-white shadow-md">
+                                <Home className="w-5 h-5"/>
+                            </div>),
+                            popUp: (
+                                <Card className="p-3 shadow-md">
+                                    Your item is in this warehouse
+                                </Card>
+                            ),
+                        }
+                    ]}
+                    zoom={getZoomLevel(lat, lon, item.storeLat, item.storeLng)}
+                />
             </div>
+
         </div>
     );
 };

@@ -9,6 +9,7 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import Index from "./pages/Index";
 import ItemDetails from "./components/ItemDetails";
 import NotFound from "./pages/NotFound";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => {
                 <BrowserRouter>
                     <Routes>
                         <Route path="/" element={<Index/>}/>
+                        <Route path="/chat" element={<Chat/>}/>
                         <Route path="/item/:id" element={<ItemDetails/>}/>
                         <Route path="*" element={<NotFound/>}/>
                     </Routes>
