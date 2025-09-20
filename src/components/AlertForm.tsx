@@ -47,61 +47,62 @@ const AlertForm = () => {
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
+    e.preventDefault();
+    setIsSubmitting(true);
 
-        try {
-            const data = {
-                uid: user.uid,
-                email: user.email,
-                username: user.displayName,
-                url: formData.url,
-                min_price: formData.minPrice,
-                max_price: formData.maxPrice,
-                min_offer: formData.minOffer,
-                max_offer: formData.maxOffer,
-                notes: formData.notes,
-                // You might want to add other relevant user data here
-            };
+    try {
+        const token = await user.getIdToken();
 
-            // Make the backend POST call
-            await fetch(`${backendUrl}/add-items`, { // Replace with your actual backend endpoint
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
+        const data = {
+            uid: user.uid,
+            email: user.email,
+            username: user.displayName,
+            url: formData.url,
+            min_price: formData.minPrice,
+            max_price: formData.maxPrice,
+            min_offer: formData.minOffer,
+            max_offer: formData.maxOffer,
+            notes: formData.notes,
+        };
 
-            toast({
-                title: "Alert Created Successfully!",
-                description: "You'll be notified when price conditions are met.",
-            });
+        await fetch(`${backendUrl}/add-items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(data),
+        });
 
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+        toast({
+            title: "Alert Created Successfully!",
+            description: "You'll be notified when price conditions are met.",
+        });
 
-            window.location.reload();
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        window.location.reload();
 
-            // Reset form and close dialog
-            setFormData({
-                url: '',
-                minPrice: 0,
-                maxPrice: 0,
-                minOffer: 0,
-                maxOffer: 0,
-                notes: ''
-            });
-            setOpen(false);
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to create alert. Please try again.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+        setFormData({
+            url: '',
+            minPrice: 0,
+            maxPrice: 0,
+            minOffer: 0,
+            maxOffer: 0,
+            notes: ''
+        });
+        setOpen(false);
+
+    } catch (error) {
+        toast({
+            title: "Error",
+            description: "Failed to create alert. Please try again.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+};
+
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
