@@ -6,7 +6,7 @@ import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {useToast} from "@/hooks/use-toast.ts";
 import {Simulate} from "react-dom/test-utils";
-import error = Simulate.error;
+import {useAuth} from "@/hooks/useAuth.tsx";
 
 interface PincodeFormProps {
     endpoint?: string; // optional API endpoint override
@@ -15,12 +15,13 @@ interface PincodeFormProps {
 }
 
 export function PincodeForm({endpoint, email, user_uid}: PincodeFormProps) {
+    const {user} = useAuth();
     const {toast} = useToast();
     const [pincode, setPincode] = useState("");
 
     const HandleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        const token = await user.getIdToken();
         if (!pincode || pincode.length !== 6) {
             alert("Enter a valid 6-digit pincode");
             return;
@@ -33,7 +34,10 @@ export function PincodeForm({endpoint, email, user_uid}: PincodeFormProps) {
         try {
             await fetch(endpoint, {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
                 body: JSON.stringify(data),
             });
             toast({

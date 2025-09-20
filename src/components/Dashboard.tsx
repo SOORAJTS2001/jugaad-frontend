@@ -36,12 +36,15 @@ interface Props {
 }
 
 export function ItemActionsDropdown({userId, itemId, emailId,}: Props) {
+    const {user} = useAuth();
     const {toast} = useToast();
     const handleDelete = async (userId, itemId) => {
         try {
+            const token = await user.getIdToken();
             const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete-item`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`},
                 body: JSON.stringify({uid: userId, item_id: itemId, email: emailId}), // ✅ using itemId here
             });
 
@@ -94,50 +97,58 @@ const Dashboard = () => {
     const [recentAlerts, setRecentAlerts] = useState([]);
     const [userPincode, setUserPincode] = useState([]);
     const [UserItems, setUserItems] = useState([]);
-
-
+    const [firebaseToken, setFirebaseToken] = useState(null)
     useEffect(() => {
-        if (!user) return; // Wait for user to be authenticated
+        if (!user) return;
 
-        const data = {
-            uid: user.uid,
-            email: user.email,
-            username: user.displayName,
-        }
+        user.getIdToken().then((t) => {
+            setFirebaseToken(t); // still update state for other components
 
-        fetch(`${backendUrl}/get-items`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        })
-            .then((response) => response.json())
-            .then((response) => {
-                setUserPincode(response.user.pincode)
-                const items = response.items
-                setUserItems(items)
-                const alerts = items.map((item, index) => ({
-                    id: index + 1,
-                    name: item.name,
-                    item_id: item.item_id,
-                    source_url: item.source_url,
-                    mrp_price: item.mrp_price,
-                    selling_price: item.selling_price,
-                    category: item.category,
-                    is_available: item.is_available ? "active" : "unavailable",
-                    price_change: item.price_change,
-                    max_price: item.max_price,
-                    max_offer: item.max_offer,
-                    pincode: item.pincode
-                }));
+            const data = {
+                uid: user.uid,
+                email: user.email,
+                username: user.displayName,
+            };
 
-                setRecentAlerts(alerts); // Set alert cards
+            console.log("Token:", t);
+
+            fetch(`${backendUrl}/get-items`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${t}`,  // ✅ use fresh token here
+                },
+                body: JSON.stringify(data),
             })
-            .catch((error) => {
-                console.error("Error fetching items:", error);
-            });
-    }, [user]); // Add pincode as dependency
+                .then((response) => response.json())
+                .then((response) => {
+                    setUserPincode(response.user.pincode);
+                    const items = response.items;
+
+                    setUserItems(items);
+
+                    const alerts = items.map((item, index) => ({
+                        id: index + 1,
+                        name: item.name,
+                        item_id: item.item_id,
+                        source_url: item.source_url,
+                        mrp_price: item.mrp_price,
+                        selling_price: item.selling_price,
+                        category: item.category,
+                        is_available: item.is_available ? "active" : "unavailable",
+                        price_change: item.price_change,
+                        max_price: item.max_price,
+                        max_offer: item.max_offer,
+                        pincode: item.pincode,
+                    }));
+
+                    setRecentAlerts(alerts);
+                })
+                .catch((error) => {
+                    console.error("Error fetching items:", error);
+                });
+        });
+    }, [user]);
 
     const handleSignOut = async () => {
         try {
@@ -367,7 +378,7 @@ const Dashboard = () => {
                                     <AlertForm/>
                                 </div>
                                 {UserItems && UserItems.length > 0 && (
-                                    <WishlistSection UserItems={UserItems} />
+                                    <WishlistSection UserItems={UserItems}/>
                                 )}
                                 {user && (
                                     <PincodeForm
