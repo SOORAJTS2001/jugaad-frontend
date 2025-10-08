@@ -65,11 +65,11 @@ const Chat = () => {
     const [hasStartedChat, setHasStartedChat] = useState(false);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
     const taglines = [
-        "culinary assistant",
-        "recipe suggestions",
-        "smart meal planner",
-        "ingredient matcher",
-        "AI cooking companion",
+        "Smart friend",
+        "Shopping companion",
+        "Personalized picker",
+        "Curated choices",
+        "Discovery guide",
     ];
     const [taglineIndex, setTaglineIndex] = useState(0);
 
@@ -361,11 +361,15 @@ const Chat = () => {
                                 className="h-16 w-16 bg-black rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <Sparkles className="h-8 w-8 text-primary-foreground"/>
                             </div>
-                            <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent mb-2">
-                                Recipe AI
+                            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+                                Jaggu
+                                <span
+                                    className="pl-2 block md:inline bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-gradient bg-[length:200%_200%] bg-[position:0%_50%] transition-all duration-500 hover:bg-[position:100%_50%]">
+                                 AI
+                              </span>
                             </h1>
-                            <p className="text-muted-foreground text-lg">
-                                Your intelligent {" "}
+                            <p className="pt-3 text-muted-foreground text-lg">
+                                Your {" "}
                                 <span
                                     key={taglineIndex}
                                     className="text-primary font-bold font-mono animate-fade-up transition-all duration-500"
@@ -443,8 +447,15 @@ const Chat = () => {
                                     <Sparkles className="h-8 w-8 text-primary-foreground"/>
                                 </div>
                                 <div>
-                                    <h1 className="text-xl font-bold">Recipe AI</h1>
-                                    <p className="text-sm text-muted-foreground">Your culinary assistant</p>
+                                    <h1 className="text-xl font-bold">
+                                        Jaggu
+                                        <span className="pl-2 block md:inline bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-gradient bg-[length:200%_200%] bg-[position:0%_50%] transition-all duration-500 hover:bg-[position:100%_50%]">
+                                            AI
+                              </span>
+                                    </h1>
+                                    <p className="text-sm text-muted-foreground">
+                                        Just Ask!
+                                    </p>
                                 </div>
                             </div>
 
