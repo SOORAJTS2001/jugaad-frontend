@@ -65,12 +65,12 @@ const Chat = () => {
     const [hasStartedChat, setHasStartedChat] = useState(false);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
     const taglines = [
-    "Smart friend",
-    "Shopping companion",
-    "Personalized picker",
-    "Curated choices",
-    "Discovery guide",
-];
+        "Smart friend",
+        "Shopping companion",
+        "Personalized picker",
+        "Curated choices",
+        "Discovery guide",
+    ];
     const [taglineIndex, setTaglineIndex] = useState(0);
 
     useEffect(() => {
@@ -362,7 +362,7 @@ const Chat = () => {
                                 <Sparkles className="h-8 w-8 text-primary-foreground"/>
                             </div>
                             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-                               Jaggu
+                                Jaggu
                                 <span
                                     className="pl-2 block md:inline bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-gradient bg-[length:200%_200%] bg-[position:0%_50%] transition-all duration-500 hover:bg-[position:100%_50%]">
                                  AI
@@ -447,8 +447,15 @@ const Chat = () => {
                                     <Sparkles className="h-8 w-8 text-primary-foreground"/>
                                 </div>
                                 <div>
-                                    <h1 className="text-xl font-bold">Recipe AI</h1>
-                                    <p className="text-sm text-muted-foreground">Your culinary assistant</p>
+                                    <h1 className="text-xl font-bold">
+                                        Jaggu
+                                        <span className="pl-2 block md:inline bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-gradient bg-[length:200%_200%] bg-[position:0%_50%] transition-all duration-500 hover:bg-[position:100%_50%]">
+                                            AI
+                              </span>
+                                    </h1>
+                                    <p className="text-sm text-muted-foreground">
+                                        Just Ask!
+                                    </p>
                                 </div>
                             </div>
 
